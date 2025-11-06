@@ -1,86 +1,641 @@
 /* =========================================
-   Persona Finder Footer (Refined)
-   footer.css
+   footer.css - 完全版
+   Persona Finder Footer Styles
+   Header統一デザイン・レスポンシブ完全対応
 ========================================= */
 
+/* ==========================================
+   CSS変数定義
+========================================== */
 :root {
+  /* フッター専用カラー（headerと統一） */
   --footer-bg: rgba(15, 20, 32, 0.96);
+  --footer-bg-solid: #0f1420;
   --footer-border: rgba(255, 255, 255, 0.08);
-  --footer-text: #a7b6d4;
-  --footer-accent: #4dd3ff;
+  --footer-text-primary: #e4f1ff;
+  --footer-text-secondary: #a7b6d4;
+  --footer-text-muted: #6b7a99;
+  
+  /* アクセント（headerのグラデーションと統一） */
+  --accent-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  --accent-primary: #3b82f6;
+  --accent-secondary: #8b5cf6;
+  --accent-glow: rgba(59, 130, 246, 0.15);
+  
+  /* スペーシング */
+  --footer-padding-y: 80px;
+  --footer-padding-x: 24px;
+  --footer-gap: 60px;
+  
+  /* フォント */
   --font-ui: "Inter", "Noto Sans JP", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
+  
+  /* トランジション */
+  --transition-base: 0.3s ease;
+  --transition-slow: 0.6s ease;
 }
 
-/* ==========================
-   全体
-========================== */
-.landing-footer {
+/* ==========================================
+   フッター全体
+========================================== */
+.site-footer {
+  position: relative;
   width: 100%;
-  box-sizing: border-box;
   background: var(--footer-bg);
   border-top: 1px solid var(--footer-border);
-  color: var(--footer-text);
-  padding: 60px 20px 40px;
-  text-align: center;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--footer-text-secondary);
   font-family: var(--font-ui);
-  position: relative;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
-/* ブラウザ差異で出る下線ズレ対策 */
-body {
-  margin: 0;
-  padding: 0;
-  overflow-x: hidden;
-}
-
-/* ==========================
-   内容
-========================== */
-.landing-container {
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.footer-quote {
-  color: var(--footer-accent);
-  font-family: var(--font-mono);
-  font-style: italic;
-  font-size: 15px;
-  line-height: 1.8;
-  margin-bottom: 14px;
-  text-shadow: 0 0 6px rgba(77, 211, 255, 0.3);
-}
-
-.footer-text {
-  font-size: 13px;
-  line-height: 1.6;
-  opacity: 0.8;
-  margin: 4px 0;
-}
-
-/* ==========================
-   デコレーション（控えめな発光ライン）
-========================== */
-.landing-footer::before {
-  content: "";
+/* 背景グラデーション効果 */
+.site-footer::before {
+  content: '';
   position: absolute;
-  top: 0;
-  left: -50%;
-  width: 200%;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 400px;
+  background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+  pointer-events: none;
+  opacity: 0.4;
+  z-index: 0;
+}
+
+/* ==========================================
+   コンテナ
+========================================== */
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--footer-padding-y) var(--footer-padding-x) 40px;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+/* ==========================================
+   フッター上部（ロゴ + ナビゲーション）
+========================================== */
+.footer-top {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr;
+  gap: var(--footer-gap);
+  margin-bottom: var(--footer-gap);
+}
+
+/* ==========================================
+   ブランドセクション
+========================================== */
+.footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.footer-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  text-decoration: none;
+  transition: transform var(--transition-base);
+}
+
+.footer-logo:hover {
+  transform: translateX(2px);
+}
+
+.footer-logo-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: var(--accent-gradient);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 24px;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  flex-shrink: 0;
+}
+
+.footer-logo:hover .footer-logo-icon {
+  transform: rotate(8deg) scale(1.05);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.footer-logo-text {
+  font-size: 20px;
+  font-weight: 800;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.footer-tagline {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--footer-text-muted);
+  max-width: 280px;
+  margin: 0;
+}
+
+/* ==========================================
+   ナビゲーション
+========================================== */
+.footer-nav {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+
+.footer-nav-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer-nav-column h4 {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--footer-text-primary);
+  margin: 0 0 16px 0;
+  opacity: 0.9;
+}
+
+.footer-nav-column ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-nav-column li {
+  margin: 0;
+}
+
+.footer-nav-column a {
+  font-size: 14px;
+  color: var(--footer-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-base), transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.footer-nav-column a::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--accent-gradient);
+  transition: width var(--transition-base);
+}
+
+.footer-nav-column a:hover {
+  color: var(--footer-text-primary);
+  transform: translateX(4px);
+}
+
+.footer-nav-column a:hover::before {
+  width: 100%;
+}
+
+.footer-nav-column a:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* 外部リンクアイコン */
+.external-icon {
+  font-size: 12px;
+  opacity: 0.6;
+  transition: opacity var(--transition-base);
+}
+
+.footer-nav-column a:hover .external-icon {
+  opacity: 1;
+}
+
+/* ==========================================
+   区切り線
+========================================== */
+.footer-divider {
+  width: 100%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--footer-accent), transparent);
-  animation: lineFlow 8s linear infinite;
+  background: linear-gradient(90deg, 
+    transparent, 
+    var(--footer-border) 20%, 
+    var(--footer-border) 80%, 
+    transparent
+  );
+  margin: var(--footer-gap) 0 40px;
+  position: relative;
+}
+
+/* グローエフェクト */
+.footer-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 40px;
+  background: radial-gradient(ellipse, rgba(59, 130, 246, 0.2), transparent 70%);
+  pointer-events: none;
+}
+
+/* ==========================================
+   フッター下部（引用 + メタ情報）
+========================================== */
+.footer-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  text-align: center;
+}
+
+/* ==========================================
+   引用
+========================================== */
+.footer-quote {
+  position: relative;
+}
+
+.quote-text {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.8;
+  color: var(--accent-primary);
+  max-width: 700px;
+  margin: 0 auto;
+  text-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+  position: relative;
+  padding: 0 40px;
+  border: none;
+}
+
+.quote-text p {
+  margin: 0;
+}
+
+.quote-text::before,
+.quote-text::after {
+  content: '"';
+  position: absolute;
+  font-size: 48px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: rgba(59, 130, 246, 0.15);
+  line-height: 1;
+  font-style: normal;
+}
+
+.quote-text::before {
+  top: -10px;
+  left: 0;
+}
+
+.quote-text::after {
+  bottom: -30px;
+  right: 0;
+}
+
+/* ==========================================
+   メタ情報
+========================================== */
+.footer-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-disclaimer {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--footer-text-muted);
+  opacity: 0.8;
+  margin: 0;
+}
+
+.footer-copyright {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--footer-text-secondary);
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+.footer-copyright-year {
+  font-family: var(--font-mono);
+}
+
+/* ==========================================
+   デコレーション用グロー
+========================================== */
+.footer-glow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent,
+    var(--accent-primary) 30%,
+    var(--accent-secondary) 70%,
+    transparent
+  );
   opacity: 0.3;
+  animation: glowPulse 4s ease-in-out infinite;
 }
 
-@keyframes lineFlow {
-  0% { left: -50%; opacity: 0.2; }
-  50% { left: 0%; opacity: 0.6; }
-  100% { left: 50%; opacity: 0.2; }
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
 }
 
-/* ==========================
-   ノイズレイヤー（軽め）
-========
+/* ==========================================
+   アニメーション
+========================================== */
+.site-footer {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--transition-slow), transform var(--transition-slow);
+}
+
+.site-footer.footer-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* noscript版は即座に表示 */
+.site-footer-noscript {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* フッター要素の段階的表示アニメーション */
+.site-footer.footer-animated .footer-top {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.site-footer.footer-animated .footer-divider {
+  animation: fadeInUp 0.6s ease 0.1s forwards;
+  opacity: 0;
+}
+
+.site-footer.footer-animated .footer-bottom {
+  animation: fadeInUp 0.6s ease 0.2s forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================
+   レスポンシブ対応
+========================================== */
+
+/* タブレット（1024px以下） */
+@media (max-width: 1024px) {
+  .footer-top {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  
+  .footer-nav {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  
+  .footer-tagline {
+    max-width: 100%;
+  }
+}
+
+/* モバイル（768px以下） */
+@media (max-width: 768px) {
+  :root {
+    --footer-padding-y: 60px;
+    --footer-padding-x: 20px;
+    --footer-gap: 40px;
+  }
+  
+  .footer-container {
+    padding-bottom: 32px;
+  }
+  
+  .footer-top {
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+  
+  .footer-nav {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .footer-nav-column h4 {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .footer-divider {
+    margin: 40px 0 32px;
+  }
+  
+  .quote-text {
+    font-size: 13px;
+    padding: 0 32px;
+  }
+  
+  .quote-text::before,
+  .quote-text::after {
+    font-size: 36px;
+  }
+  
+  .quote-text::before {
+    top: -8px;
+    left: -4px;
+  }
+  
+  .quote-text::after {
+    bottom: -24px;
+    right: -4px;
+  }
+  
+  .footer-disclaimer {
+    font-size: 11px;
+  }
+  
+  .footer-copyright {
+    font-size: 12px;
+  }
+  
+  .hide-mobile {
+    display: none;
+  }
+}
+
+/* 小型モバイル（480px以下） */
+@media (max-width: 480px) {
+  :root {
+    --footer-padding-y: 48px;
+    --footer-padding-x: 16px;
+  }
+  
+  .footer-logo-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .footer-logo-text {
+    font-size: 18px;
+  }
+  
+  .footer-tagline {
+    font-size: 13px;
+  }
+  
+  .quote-text {
+    font-size: 12px;
+    padding: 0 24px;
+    line-height: 1.7;
+  }
+  
+  .quote-text::before,
+  .quote-text::after {
+    font-size: 28px;
+  }
+  
+  .footer-nav-column a {
+    font-size: 13px;
+  }
+  
+  .footer-nav-column h4 {
+    font-size: 11px;
+  }
+}
+
+/* ==========================================
+   アクセシビリティ対応
+========================================== */
+
+/* ハイコントラストモード対応 */
+@media (prefers-contrast: high) {
+  .site-footer {
+    background: var(--footer-bg-solid);
+    border-top: 2px solid var(--footer-text-primary);
+  }
+  
+  .footer-nav-column a {
+    text-decoration: underline;
+  }
+  
+  .footer-logo-icon {
+    border: 2px solid var(--footer-text-primary);
+  }
+}
+
+/* ダークモード優先ユーザー向け最適化 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --footer-bg: rgba(10, 15, 25, 0.98);
+    --footer-text-muted: #7b8aa8;
+  }
+}
+
+/* モーション削減対応 */
+@media (prefers-reduced-motion: reduce) {
+  .site-footer,
+  .footer-nav-column a,
+  .footer-logo-icon,
+  .footer-glow,
+  .footer-top,
+  .footer-divider,
+  .footer-bottom {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .footer-nav-column a:hover,
+  .footer-logo:hover {
+    transform: none;
+  }
+  
+  .site-footer {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 印刷用スタイル */
+@media print {
+  .site-footer {
+    background: white;
+    color: black;
+    border-top: 2px solid black;
+    page-break-inside: avoid;
+  }
+  
+  .footer-glow,
+  .site-footer::before,
+  .footer-divider::before {
+    display: none;
+  }
+  
+  .footer-nav-column a {
+    color: black;
+    text-decoration: underline;
+  }
+  
+  .footer-nav-column a[href^="#"]::after {
+    content: " (" attr(href) ")";
+    font-size: 10px;
+  }
+  
+  .footer-logo-icon {
+    background: black;
+    box-shadow: none;
+  }
+  
+  .footer-logo-text,
+  .quote-text {
+    color: black !important;
+    -webkit-text-fill-color: black !important;
+    text-shadow: none;
+  }
+}
+
+/* ==========================================
+   End of footer.css
+========================================== */

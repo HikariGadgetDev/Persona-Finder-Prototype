@@ -692,7 +692,6 @@ section.visible {
 }
 
 .quote-box::before {
-  content: '"';
   position: absolute;
   top: 10px;
   left: 20px;

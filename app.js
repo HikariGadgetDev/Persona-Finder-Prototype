@@ -1,4 +1,4 @@
-// app.js (完全版 - 最初から暫定診断・重み付け表示)
+// app.js (高校生向けシンプル版)
 
 import {
     calculateScore,
@@ -13,12 +13,6 @@ import { questions as originalQuestions } from './data.js';
 // セキュリティ: HTMLサニタイズ関数
 // ============================================
 
-/**
- * テキストをHTMLエスケープ（XSS対策）
- * 注: 現在は静的データのみだが、将来的な拡張に備えて実装
- * @param {string} text - エスケープするテキスト
- * @returns {string} エスケープされたHTML
- */
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -29,7 +23,6 @@ function escapeHtml(text) {
 // 質問のシャッフル処理
 // ============================================
 
-// Fisher-Yatesシャッフル
 function fisherYatesShuffle(array) {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -39,14 +32,12 @@ function fisherYatesShuffle(array) {
     return shuffled;
 }
 
-// 制約付きシャッフル(同じ機能が2回連続しないように)
 function shuffleQuestionsWithConstraints(questions) {
     const maxAttempts = 1000;
     
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const shuffled = fisherYatesShuffle(questions);
         
-        // 連続チェック
         let hasConsecutive = false;
         for (let i = 1; i < shuffled.length; i++) {
             if (shuffled[i].type === shuffled[i - 1].type) {
@@ -55,25 +46,21 @@ function shuffleQuestionsWithConstraints(questions) {
             }
         }
         
-        // 連続がなければ採用
         if (!hasConsecutive) {
             return shuffled;
         }
     }
     
-    // フォールバック: 1000回試してもダメなら通常のシャッフル結果を返す
     console.warn('制約付きシャッフルが1000回で完了しませんでした。通常のシャッフル結果を使用します。');
     return fisherYatesShuffle(questions);
 }
 
-// シャッフルされた質問を使用
 const questions = shuffleQuestionsWithConstraints(originalQuestions);
 
 // ============================================
-// 初期状態定義（ディープコピー対応）
+// 初期状態定義
 // ============================================
 
-// ファクトリー関数で毎回新しいオブジェクトを生成
 const createDefaultState = () => ({
     currentQuestion: 0,
     answers: {},
@@ -85,14 +72,8 @@ const createDefaultState = () => ({
 });
 
 let state = createDefaultState();
-
-// 処理中フラグ（連打防止用）
 let isProcessing = false;
-
-// シャドウ機能の説明を一度だけ表示するためのフラグ
 let hasSeenShadowExplanation = false;
-
-// 重み付け説明を一度だけ表示するためのフラグ
 let hasShownWeightingExplanation = false;
 
 // ============================================
@@ -107,22 +88,16 @@ const SCORE_LABELS = {
     5: "とてもそう思う"
 };
 
-// スコア正規化定数
-// 理論値: 各機能8問 × 最大±2.3 ≒ ±18.4
-// 実用的な範囲として -20 ~ +20 を想定し、0-100に正規化
 const SCORE_MIN = -20;
 const SCORE_MAX = 20;
-
-// 暫定診断の精度が上がる閾値（1機能分 = 8問）
 const MIN_ANSWERS_FOR_PROVISIONAL = 8;
 
-// アニメーション遅延時間（ミリ秒）
 const ANIMATION_DELAY = {
-    BUTTON_FEEDBACK: 200,      // ボタン選択後のフィードバック時間
-    SCREEN_TRANSITION: 300,    // 画面遷移時の待機時間
-    POPUP_FADE_START: 50,      // スコアポップアップのフェード開始
-    POPUP_REMOVE: 1200,        // スコアポップアップの削除タイミング
-    RESULT_STAGGER: 100        // 結果画面の要素表示間隔
+    BUTTON_FEEDBACK: 200,
+    SCREEN_TRANSITION: 300,
+    POPUP_FADE_START: 50,
+    POPUP_REMOVE: 1200,
+    RESULT_STAGGER: 100
 };
 
 function normalizeScore(rawScore) {
@@ -132,25 +107,22 @@ function normalizeScore(rawScore) {
 }
 
 // ============================================
-// イベントハンドラ（グローバル関数）
+// イベントハンドラ
 // ============================================
 
 /**
- * 回答処理（逆転項目対応版）
- * @param {number} value - 選択された回答値（1-5）
- * @param {Event} event - クリックイベント
+ * 回答処理(完全一致版)
  */
 window.handleAnswer = function (value, event) {
-    // 連打防止：処理中は無視
     if (isProcessing) return;
     isProcessing = true;
 
     const question = questions[state.currentQuestion];
     const funcType = question.type;
-    const isReverse = question.reverse || false; // 逆転項目フラグ
+    const isReverse = question.reverse || false;
     const oldAnswer = state.answers[question.id];
 
-    // 前回の回答スコアを差し引く（逆転項目考慮）
+    // 前回の回答スコアを差し引く
     if (oldAnswer !== undefined) {
         const oldAnswerData = state.answers[question.id];
         const oldScore = calculateScore(
@@ -160,19 +132,25 @@ window.handleAnswer = function (value, event) {
         state.functionScores[funcType] -= oldScore;
     }
 
-    // 新しいスコアを加算（逆転項目考慮）
+    // 🆕 変更前の正規化スコアを保存
+    const oldNormalizedScore = normalizeScore(state.functionScores[funcType]);
+
+    // 新しいスコアを加算
     const delta = calculateScore(value, isReverse);
+    state.functionScores[funcType] += delta;
     
-    // 回答を保存（値と逆転フラグを両方保存）
+    // 🆕 変更後の正規化スコアを取得
+    const newNormalizedScore = normalizeScore(state.functionScores[funcType]);
+    const normalizedDelta = newNormalizedScore - oldNormalizedScore;
+
+    // 回答を保存
     state.answers[question.id] = {
         value: value,
         isReverse: isReverse
     };
-    
-    state.functionScores[funcType] += delta;
 
-    // ポップアップ演出
-    showScorePopup(funcType, delta, isReverse);
+    // 🆕 ポップアップに「実際の表示変動値」を渡す
+    showScorePopup(funcType, delta, normalizedDelta, isReverse);
 
     // ボタンの選択状態を更新
     if (event && event.currentTarget) {
@@ -184,7 +162,7 @@ window.handleAnswer = function (value, event) {
         event.currentTarget.classList.add('selected');
     }
 
-    // 次の質問へ遷移（または結果表示）
+    // 次の質問へ
     if (state.currentQuestion < questions.length - 1) {
         setTimeout(() => {
             nextStep(() => state.currentQuestion++);
@@ -196,9 +174,6 @@ window.handleAnswer = function (value, event) {
     }
 };
 
-/**
- * 前の質問に戻る
- */
 window.goBack = function () {
     if (state.currentQuestion > 0 && !isProcessing) {
         state.currentQuestion--;
@@ -206,21 +181,13 @@ window.goBack = function () {
     }
 };
 
-/**
- * 診断をリセット（ディープコピー版）
- */
 window.reset = function () {
-    state = createDefaultState(); // 新しいオブジェクトを生成
-    hasSeenShadowExplanation = false; // shadow説明フラグもリセット
-    hasShownWeightingExplanation = false; // 重み付け説明フラグもリセット
+    state = createDefaultState();
+    hasSeenShadowExplanation = false;
+    hasShownWeightingExplanation = false;
     render();
 };
 
-/**
- * キーボードナビゲーション処理
- * @param {KeyboardEvent} event - キーボードイベント
- * @param {number} currentValue - 現在のボタンの値
- */
 window.handleKeyboardNavigation = function (event, currentValue) {
     const options = Array.from(document.querySelectorAll('.option'));
     const currentIndex = options.findIndex(btn => parseInt(btn.dataset.value) === currentValue);
@@ -257,10 +224,31 @@ window.handleKeyboardNavigation = function (event, currentValue) {
     
     if (nextIndex !== currentIndex && options[nextIndex]) {
         options[nextIndex].focus();
-        // tabindexを更新（ラジオグループのフォーカス管理）
         options.forEach((opt, idx) => {
             opt.tabIndex = idx === nextIndex ? 0 : -1;
         });
+    }
+};
+
+// 🆕 スコア詳細トグル
+window.toggleScoreDetail = function(detailId) {
+    const detail = document.getElementById(detailId);
+    if (!detail) return;
+    
+    const isOpen = detail.style.maxHeight !== '0px' && detail.style.maxHeight !== '';
+    
+    // 全ての詳細を閉じる
+    document.querySelectorAll('.score-detail').forEach(d => {
+        if (d.id !== detailId) {
+            d.style.maxHeight = '0px';
+        }
+    });
+    
+    // クリックされた詳細をトグル
+    if (isOpen) {
+        detail.style.maxHeight = '0px';
+    } else {
+        detail.style.maxHeight = detail.scrollHeight + 'px';
     }
 };
 
@@ -269,21 +257,20 @@ window.handleKeyboardNavigation = function (event, currentValue) {
 // ============================================
 
 /**
- * スコア加算時のポップアップ演出（常に重み付け表示）
+ * スコアポップアップ(高校生向けシンプル版)
  * 
  * @param {string} funcType - 認知機能タイプ
- * @param {number} delta - 加算されたスコア（重み付け前）
+ * @param {number} delta - 生スコアの変動(内部計算用)
+ * @param {number} normalizedDelta - 正規化スコア(0-100)の変動(表示用)
  * @param {boolean} isReverse - 逆転項目かどうか
  */
-function showScorePopup(funcType, delta, isReverse) {
+function showScorePopup(funcType, delta, normalizedDelta, isReverse) {
     const el = document.createElement("div");
     el.className = "score-popup";
     
-    // 現在の暫定診断結果を取得
+    // 暫定タイプ取得
     const provisionalResult = determineMBTIType(state.functionScores, COGNITIVE_STACKS);
     const provisionalType = provisionalResult.type;
-    
-    // 暫定タイプでのこの機能の位置を確認
     const stack = COGNITIVE_STACKS[provisionalType];
     const position = stack.indexOf(funcType);
     
@@ -300,41 +287,134 @@ function showScorePopup(funcType, delta, isReverse) {
         isShadow = true;
     }
     
-    const sign = delta >= 0 ? '+' : '';
-    const reverseIndicator = isReverse ? ' (R)' : '';
+    const sign = normalizedDelta >= 0 ? '+' : '';
+    const reverseIndicator = isReverse ? ' <span style="color:#f59e0b;font-size:11px;font-weight:600;">R</span>' : '';
     
     if (isShadow) {
-        el.textContent = `${FUNCTIONS[funcType].name} [${positionLabel}] ${sign}${delta.toFixed(1)}${reverseIndicator}`;
+        // Shadow機能: シンプル表示
+        el.innerHTML = `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                <div style="font-weight:700;font-size:15px;">
+                    ${FUNCTIONS[funcType].name}
+                    <span style="font-size:11px;opacity:0.6;margin-left:4px;">[shadow]</span>
+                </div>
+                <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:#94a3b8;">
+                    ${sign}${normalizedDelta}${reverseIndicator}
+                </div>
+            </div>
+        `;
         el.setAttribute('data-shadow', 'true');
         
-        // Shadow機能の説明（初回のみ）
+        // Shadow機能の説明(初回のみ)
         if (!hasSeenShadowExplanation) {
             hasSeenShadowExplanation = true;
-            setTimeout(() => {
-                showShadowExplanation();
-            }, 1500);
+            setTimeout(() => showShadowExplanation(), 1500);
         }
     } else {
+        // スタック内機能: メイン表示 + ホバーで詳細
         const weightedDelta = delta * weight;
         const weightedSign = weightedDelta >= 0 ? '+' : '';
-        el.textContent = `${FUNCTIONS[funcType].name} [${positionLabel}] ${weightedSign}${weightedDelta.toFixed(1)}${reverseIndicator}`;
+        
+        el.innerHTML = `
+            <div style="position:relative;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+                    <div style="font-weight:700;font-size:15px;">
+                        ${FUNCTIONS[funcType].name}
+                        <span style="font-size:11px;opacity:0.6;margin-left:4px;">[${positionLabel}]</span>
+                    </div>
+                    <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:#60a5fa;">
+                        ${sign}${normalizedDelta}${reverseIndicator}
+                    </div>
+                </div>
+                
+                <!-- 詳細情報(ホバー/タップで表示) -->
+                <div class="popup-detail" style="
+                    position:absolute;
+                    top:calc(100% + 8px);
+                    left:50%;
+                    transform:translateX(-50%);
+                    background:rgba(15,23,42,0.98);
+                    padding:10px 14px;
+                    border-radius:8px;
+                    font-size:11px;
+                    white-space:nowrap;
+                    opacity:0;
+                    pointer-events:none;
+                    transition:opacity 0.2s ease;
+                    z-index:10;
+                    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+                    border:1px solid rgba(148,163,184,0.2);
+                ">
+                    <div style="margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid rgba(148,163,184,0.2);">
+                        <span style="opacity:0.7;">診断影響:</span>
+                        <span style="color:#fbbf24;font-weight:700;margin-left:6px;">${weightedSign}${weightedDelta.toFixed(1)}</span>
+                        <span style="opacity:0.5;margin-left:4px;">(×${weight})</span>
+                    </div>
+                    <div>
+                        <span style="opacity:0.7;">生スコア:</span>
+                        <span style="color:#94a3b8;font-weight:700;margin-left:6px;">${delta >= 0 ? '+' : ''}${delta.toFixed(1)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // ホバー/タップで詳細表示
+        let detailTimeout;
+        const detail = el.querySelector('.popup-detail');
+        
+        // PCでホバー
+        el.addEventListener('mouseenter', () => {
+            clearTimeout(detailTimeout);
+            detailTimeout = setTimeout(() => {
+                if (detail) {
+                    detail.style.opacity = '1';
+                    detail.style.pointerEvents = 'auto';
+                }
+            }, 300); // 0.3秒後に表示
+        });
+        
+        el.addEventListener('mouseleave', () => {
+            clearTimeout(detailTimeout);
+            if (detail) {
+                detail.style.opacity = '0';
+                detail.style.pointerEvents = 'none';
+            }
+        });
+        
+        // スマホでタップ
+        el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (detail) {
+                const isVisible = detail.style.opacity === '1';
+                detail.style.opacity = isVisible ? '0' : '1';
+                detail.style.pointerEvents = isVisible ? 'none' : 'auto';
+                
+                // 3秒後に自動で閉じる
+                if (!isVisible) {
+                    setTimeout(() => {
+                        detail.style.opacity = '0';
+                        detail.style.pointerEvents = 'none';
+                    }, 3000);
+                }
+            }
+        });
     }
     
     document.body.appendChild(el);
 
-    // ランダム位置（画面中央付近）
+    // ランダム位置
     const x = window.innerWidth / 2 + (Math.random() * 100 - 50);
     const y = window.innerHeight / 2 + (Math.random() * 50 - 25);
     el.style.left = `${x}px`;
     el.style.top = `${y}px`;
 
-    // フェードアウトアニメーション
+    // フェードアウト
     setTimeout(() => el.classList.add("fade-out"), ANIMATION_DELAY.POPUP_FADE_START);
     setTimeout(() => el.remove(), ANIMATION_DELAY.POPUP_REMOVE);
 }
 
 /**
- * シャドウ機能の説明ツールチップ
+ * Shadow機能の説明ツールチップ
  */
 function showShadowExplanation() {
     const tooltip = document.createElement('div');
@@ -343,7 +423,7 @@ function showShadowExplanation() {
         <div style="font-weight: 700; margin-bottom: 8px;">💡 Shadow機能とは？</div>
         <div style="font-size: 13px; line-height: 1.5; opacity: 0.9;">
             暫定タイプのスタックに含まれない機能です。<br>
-            <strong>係数はかからず、診断結果に影響しません。</strong>
+            スコアは表示されますが、<strong>タイプ診断には影響しません。</strong>
         </div>
     `;
     
@@ -371,7 +451,7 @@ function showShadowExplanation() {
 }
 
 /**
- * 重み付けモード切り替えの説明ツールチップ（8問目）
+ * 重み付けモードの説明(8問目)
  */
 function showWeightingExplanation() {
     const tooltip = document.createElement('div');
@@ -379,15 +459,17 @@ function showWeightingExplanation() {
     tooltip.innerHTML = `
         <div style="font-weight: 700; margin-bottom: 12px; font-size: 15px;">🎯 8問のデータが揃いました</div>
         <div style="font-size: 13px; line-height: 1.7; opacity: 0.95;">
-            診断精度が向上しました。暫定タイプの信頼性が高まります。<br><br>
-            <strong style="color:#fbbf24;">ポップアップの係数について</strong><br><br>
-            同じ回答でも、機能の位置で影響度が変わります：<br>
-            • <span style="color:#60a5fa;">主機能</span>なら <strong>4倍</strong>（+2.3 → +9.2）<br>
-            • <span style="color:#a78bfa;">補助機能</span>なら <strong>2倍</strong>（+2.3 → +4.6）<br>
-            • <span style="color:#10b981;">第三機能</span>なら <strong>1倍</strong>（+2.3 → +2.3）<br>
-            • <span style="color:#f59e0b;">劣等機能</span>なら <strong>0.5倍</strong>（+2.3 → +1.2）<br>
-            • <span style="color:#94a3b8;">Shadow機能</span>なら <strong>係数なし</strong>（診断に影響なし）<br><br>
-            あなたのタイプで重要な機能ほど、診断への影響が大きくなります。
+            暫定タイプの信頼性が高まります。<br><br>
+            
+            <div style="background:rgba(96,165,250,0.15);padding:10px;border-radius:8px;margin-bottom:10px;">
+                <strong style="color:#60a5fa;">ポップアップの数字</strong><br>
+                画面のスコア変動と一致します
+            </div>
+            
+            <div style="font-size:12px;opacity:0.8;line-height:1.6;">
+                💡 ポップアップにマウスを乗せると<br>
+                詳しい内訳が見られます
+            </div>
         </div>
     `;
     
@@ -402,7 +484,7 @@ function showWeightingExplanation() {
     tooltip.style.padding = '20px 24px';
     tooltip.style.borderRadius = '12px';
     tooltip.style.boxShadow = '0 8px 24px rgba(0, 0, 0, 0.4)';
-    tooltip.style.maxWidth = '520px';
+    tooltip.style.maxWidth = '480px';
     tooltip.style.zIndex = '10000';
     tooltip.style.textAlign = 'left';
     tooltip.style.animation = 'fadeIn 0.3s ease-out';
@@ -411,13 +493,9 @@ function showWeightingExplanation() {
         tooltip.style.opacity = '0';
         tooltip.style.transition = 'opacity 0.3s ease-out';
         setTimeout(() => tooltip.remove(), 300);
-    }, 10000);
+    }, 8000);
 }
 
-/**
- * 状態更新後の画面遷移用ヘルパー
- * @param {Function} callback - 状態を更新するコールバック
- */
 function nextStep(callback) {
     setTimeout(() => {
         callback();
@@ -430,9 +508,6 @@ function nextStep(callback) {
 // レンダリング関数
 // ============================================
 
-/**
- * メイン描画処理
- */
 function render() {
     const container = document.getElementById('app');
     
@@ -442,7 +517,6 @@ function render() {
         renderQuestion(container);
         updateSidePanel();
         
-        // 選択状態を正しく反映
         setTimeout(() => {
             const allOptions = document.querySelectorAll('.option');
             const currentQuestion = questions[state.currentQuestion];
@@ -459,7 +533,7 @@ function render() {
 }
 
 /**
- * サイドパネルの更新（最初から暫定診断 + 正規化スコア表示）
+ * サイドパネル更新(高校生向けシンプル版)
  */
 function updateSidePanel() {
     const answeredCount = Object.keys(state.answers).length;
@@ -468,15 +542,16 @@ function updateSidePanel() {
     const sidePanel = document.querySelector('.summary');
     if (!sidePanel) return;
     
-    // 正規化スコア（常に表示）
+    // 正規化スコア
     const sortedScores = Object.entries(state.functionScores)
         .map(([key, val]) => ({
             key,
-            value: normalizeScore(val)
+            rawValue: val,
+            normalizedValue: normalizeScore(val)
         }))
-        .sort((a, b) => b.value - a.value);
+        .sort((a, b) => b.normalizedValue - a.normalizedValue);
     
-    // 回答数0なら暫定診断なし
+    // 回答数0
     if (answeredCount === 0) {
         sidePanel.innerHTML = `
             <div class="provisional-mbti">
@@ -500,12 +575,12 @@ function updateSidePanel() {
             
             <div class="score-list" id="scoreList">
                 <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;text-align:center;">
-                    スコア（0 〜 100、50が平均）
+                    スコア(0 〜 100、50が平均)
                 </div>
                 ${sortedScores.map(item => `
                     <div class="score-item">
                         <div style="font-weight:700;min-width:48px">${escapeHtml(item.key)}</div>
-                        <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${item.value}</div>
+                        <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${item.normalizedValue}</div>
                     </div>
                 `).join('')}
             </div>
@@ -515,12 +590,36 @@ function updateSidePanel() {
         return;
     }
     
-    // 1問以上回答済み → 暫定診断を表示
+    // 暫定診断
     const provisionalResult = determineMBTIType(state.functionScores, COGNITIVE_STACKS);
     const provisionalType = provisionalResult.type;
     const provisionalDesc = mbtiDescriptions[provisionalType];
+    const stack = COGNITIVE_STACKS[provisionalType];
     
-    // 8問未満は警告を出す
+    // スタック位置を取得
+    const stackPositions = {};
+    stack.forEach((func, index) => {
+        stackPositions[func] = {
+            position: index,
+            label: ['主', '補', '第三', '劣'][index],
+            weight: [4.0, 2.0, 1.0, 0.5][index]
+        };
+    });
+    
+    // 重み付けスコアを計算
+    const scoresWithWeights = sortedScores.map(item => {
+        const stackInfo = stackPositions[item.key];
+        const weightedValue = stackInfo 
+            ? item.rawValue * stackInfo.weight 
+            : 0;
+        
+        return {
+            ...item,
+            stackInfo,
+            weightedValue
+        };
+    });
+    
     const reliabilityWarning = answeredCount < MIN_ANSWERS_FOR_PROVISIONAL
         ? '<div style="font-size:11px;color:#fbbf24;margin-top:4px;">⚠ 回答数が少ないため精度が低い可能性があります</div>'
         : '';
@@ -542,21 +641,75 @@ function updateSidePanel() {
         </div>
         
         <div class="score-list" id="scoreList">
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;text-align:center;">
-                スコア（0 〜 100、50が平均）
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px;text-align:center;">
+                スコア(0 〜 100、50が平均)
             </div>
-            ${sortedScores.map(item => `
-                <div class="score-item">
-                    <div style="font-weight:700;min-width:48px">${escapeHtml(item.key)}</div>
-                    <div style="font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;background:linear-gradient(135deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">${item.value}</div>
-                </div>
-            `).join('')}
+            
+            ${scoresWithWeights.map((item, index) => {
+                const isInStack = item.stackInfo !== undefined;
+                const positionLabel = isInStack ? item.stackInfo.label : 'shadow';
+                const detailId = `score-detail-${index}`;
+                
+                return `
+                    <div class="score-item-simple" style="
+                        background: ${isInStack ? 'var(--bg-secondary)' : 'transparent'};
+                        padding: 10px 14px;
+                        border-radius: 8px;
+                        margin-bottom: 6px;
+                        border: 1px solid ${isInStack ? 'rgba(96,165,250,0.2)' : 'rgba(148,163,184,0.1)'};
+                        cursor: ${isInStack ? 'pointer' : 'default'};
+                        transition: all 0.2s;
+                        user-select: none;
+                    " ${isInStack ? `onclick="toggleScoreDetail('${detailId}')"` : ''}>
+                        <div style="display:flex;align-items:center;justify-content:space-between;">
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <span style="font-weight:700;font-size:15px;">${escapeHtml(item.key)}</span>
+                                <span style="font-size:10px;opacity:0.5;font-weight:500;">[${positionLabel}]</span>
+                                ${isInStack ? '<span style="font-size:10px;opacity:0.4;">▼</span>' : ''}
+                            </div>
+                            <div style="font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:800;color:#60a5fa;">
+                                ${item.normalizedValue}
+                            </div>
+                        </div>
+                        
+                        ${isInStack ? `
+                            <div id="${detailId}" class="score-detail" style="
+                                max-height: 0;
+                                overflow: hidden;
+                                transition: max-height 0.3s ease;
+                                margin-top: 0;
+                            ">
+                                <div style="padding-top:8px;margin-top:8px;border-top:1px solid rgba(148,163,184,0.2);">
+                                    <div style="display:flex;justify-content:space-between;font-size:11px;opacity:0.7;margin-bottom:4px;">
+                                        <span>診断影響 (×${item.stackInfo.weight})</span>
+                                        <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#fbbf24;">
+                                            ${item.weightedValue.toFixed(1)}
+                                        </span>
+                                    </div>
+                                    <div style="display:flex;justify-content:space-between;font-size:11px;opacity:0.7;">
+                                        <span>生スコア</span>
+                                        <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#94a3b8;">
+                                            ${item.rawValue.toFixed(1)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div style="font-size:10px;opacity:0.4;text-align:center;margin-top:4px;">
+                                診断に影響なし
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('')}
         </div>
         
-        <footer class="note">回答するたびに暫定診断が更新されます</footer>
+        <footer class="note">
+            💡 各スコアをタップ/クリックすると詳細が見られます
+        </footer>
     `;
     
-    // 8問目（初回のみ）係数の説明を表示
+    // 8問目の説明
     if (answeredCount === MIN_ANSWERS_FOR_PROVISIONAL && !hasShownWeightingExplanation) {
         hasShownWeightingExplanation = true;
         setTimeout(() => {
@@ -620,7 +773,6 @@ function renderQuestion(container) {
         </div>
     `;
     
-    // キーボードナビゲーション: 最初の選択肢または選択済みの選択肢にフォーカス
     setTimeout(() => {
         const selectedOption = container.querySelector('.option[aria-checked="true"]');
         const firstOption = container.querySelector('.option');
