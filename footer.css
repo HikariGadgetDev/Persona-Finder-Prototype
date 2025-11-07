@@ -1,0 +1,642 @@
+/* =========================================
+   footer.css - BEM版(クリーンアップ済み)
+   Persona Finder フッター専用スタイル
+========================================= */
+
+/* ==========================================
+   CSS変数(一時的 - 後でvariables.cssに移行)
+========================================== */
+:root {
+  --footer-bg: rgba(15, 20, 32, 0.96);
+  --footer-bg-solid: #0f1420;
+  --footer-border: rgba(255, 255, 255, 0.08);
+  --footer-text-primary: #e4f1ff;
+  --footer-text-secondary: #a7b6d4;
+  --footer-text-muted: #6b7a99;
+  --accent-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  --accent-primary: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.15);
+  --footer-padding-y: 80px;
+  --footer-padding-x: 24px;
+  --footer-gap: 60px;
+  --font-ui: "Inter", "Noto Sans JP", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  --transition-base: 0.3s ease;
+  --transition-slow: 0.6s ease;
+}
+
+/* ==========================================
+   フッター全体
+========================================== */
+.footer {
+  position: relative;
+  width: 100%;
+  background: var(--footer-bg);
+  border-top: 1px solid var(--footer-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: var(--footer-text-secondary);
+  font-family: var(--font-ui);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 背景グラデーション効果 */
+.footer::before {
+  content: '';
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 800px;
+  height: 400px;
+  background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+  pointer-events: none;
+  opacity: 0.4;
+  z-index: 0;
+}
+
+/* ==========================================
+   コンテナ
+========================================== */
+.footer__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--footer-padding-y) var(--footer-padding-x) 40px;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+}
+
+/* ==========================================
+   フッター上部(ロゴ + ナビゲーション)
+========================================== */
+.footer__top {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr;
+  gap: var(--footer-gap);
+  margin-bottom: var(--footer-gap);
+}
+
+/* ==========================================
+   ブランドセクション
+========================================== */
+.footer__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.footer__logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  text-decoration: none;
+  transition: transform var(--transition-base);
+}
+
+.footer__logo:hover {
+  transform: translateX(2px);
+}
+
+.footer__logo-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  background: var(--accent-gradient);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 24px;
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+  flex-shrink: 0;
+}
+
+.footer__logo:hover .footer__logo-icon {
+  transform: rotate(8deg) scale(1.05);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.footer__logo-text {
+  font-size: 20px;
+  font-weight: 800;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.footer__tagline {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--footer-text-muted);
+  max-width: 280px;
+  margin: 0;
+}
+
+/* ==========================================
+   ナビゲーション
+========================================== */
+.footer__nav {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+
+.footer__nav-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.footer__nav-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--footer-text-primary);
+  margin: 0 0 16px 0;
+  opacity: 0.9;
+}
+
+.footer__nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer__nav-list li {
+  margin: 0;
+}
+
+.footer__nav-link {
+  font-size: 14px;
+  color: var(--footer-text-secondary);
+  text-decoration: none;
+  transition: color var(--transition-base), transform 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.footer__nav-link::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--accent-gradient);
+  transition: width var(--transition-base);
+}
+
+.footer__nav-link:hover {
+  color: var(--footer-text-primary);
+  transform: translateX(4px);
+}
+
+.footer__nav-link:hover::before {
+  width: 100%;
+}
+
+.footer__nav-link:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* 外部リンクアイコン */
+.footer__nav-icon {
+  font-size: 12px;
+  opacity: 0.6;
+  transition: opacity var(--transition-base);
+}
+
+.footer__nav-link:hover .footer__nav-icon {
+  opacity: 1;
+}
+
+/* ==========================================
+   区切り線
+========================================== */
+.footer__divider {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    var(--footer-border) 20%, 
+    var(--footer-border) 80%, 
+    transparent
+  );
+  margin: var(--footer-gap) 0 40px;
+  position: relative;
+}
+
+.footer__divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 40px;
+  background: radial-gradient(ellipse, rgba(59, 130, 246, 0.2), transparent 70%);
+  pointer-events: none;
+}
+
+/* ==========================================
+   フッター下部(引用 + メタ情報)
+========================================== */
+.footer__bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  text-align: center;
+}
+
+/* ==========================================
+   引用
+========================================== */
+.footer__quote {
+  position: relative;
+}
+
+.footer__quote-text {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-style: italic;
+  line-height: 1.8;
+  color: var(--accent-primary);
+  max-width: 700px;
+  margin: 0 auto;
+  text-shadow: 0 0 8px rgba(59, 130, 246, 0.2);
+  position: relative;
+  padding: 0 40px;
+  border: none;
+}
+
+.footer__quote-text p {
+  margin: 0;
+}
+
+.footer__quote-text::before,
+.footer__quote-text::after {
+  content: '"';
+  position: absolute;
+  font-size: 48px;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  color: rgba(59, 130, 246, 0.15);
+  line-height: 1;
+  font-style: normal;
+}
+
+.footer__quote-text::before {
+  top: -10px;
+  left: 0;
+}
+
+.footer__quote-text::after {
+  bottom: -30px;
+  right: 0;
+}
+
+/* ==========================================
+   メタ情報
+========================================== */
+.footer__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer__disclaimer {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--footer-text-muted);
+  opacity: 0.8;
+  margin: 0;
+}
+
+.footer__copyright {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--footer-text-secondary);
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+.footer__copyright-year {
+  font-family: var(--font-mono);
+}
+
+.footer__copyright-link {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: opacity var(--transition-base);
+}
+
+.footer__copyright-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* ==========================================
+   デコレーション用グロー
+========================================== */
+.footer__glow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, 
+    transparent,
+    var(--accent-primary) 30%,
+    #8b5cf6 70%,
+    transparent
+  );
+  opacity: 0.3;
+  animation: glowPulse 4s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+/* ==========================================
+   アニメーション
+========================================== */
+.footer {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--transition-slow), transform var(--transition-slow);
+}
+
+.footer--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* noscript版は即座に表示 */
+.footer--noscript {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* フッター要素の段階的表示 */
+.footer--visible .footer__top {
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+.footer--visible .footer__divider {
+  animation: fadeInUp 0.6s ease 0.1s forwards;
+  opacity: 0;
+}
+
+.footer--visible .footer__bottom {
+  animation: fadeInUp 0.6s ease 0.2s forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==========================================
+   レスポンシブ: タブレット (1024px以下)
+========================================== */
+@media (max-width: 1024px) {
+  .footer__top {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  
+  .footer__nav {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+  }
+  
+  .footer__tagline {
+    max-width: 100%;
+  }
+}
+
+/* ==========================================
+   レスポンシブ: モバイル (768px以下)
+========================================== */
+@media (max-width: 768px) {
+  :root {
+    --footer-padding-y: 60px;
+    --footer-padding-x: 20px;
+    --footer-gap: 40px;
+  }
+  
+  .footer__container {
+    padding-bottom: 32px;
+  }
+  
+  .footer__top {
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+  
+  .footer__nav {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .footer__nav-title {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+  
+  .footer__divider {
+    margin: 40px 0 32px;
+  }
+  
+  .footer__quote-text {
+    font-size: 13px;
+    padding: 0 32px;
+  }
+  
+  .footer__quote-text::before,
+  .footer__quote-text::after {
+    font-size: 36px;
+  }
+  
+  .footer__quote-text::before {
+    top: -8px;
+    left: -4px;
+  }
+  
+  .footer__quote-text::after {
+    bottom: -24px;
+    right: -4px;
+  }
+  
+  .footer__disclaimer {
+    font-size: 11px;
+  }
+  
+  .footer__copyright {
+    font-size: 12px;
+  }
+  
+  .hide-mobile {
+    display: none;
+  }
+}
+
+/* ==========================================
+   レスポンシブ: 小型モバイル (480px以下)
+========================================== */
+@media (max-width: 480px) {
+  :root {
+    --footer-padding-y: 48px;
+    --footer-padding-x: 16px;
+  }
+  
+  .footer__logo-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+  
+  .footer__logo-text {
+    font-size: 18px;
+  }
+  
+  .footer__tagline {
+    font-size: 13px;
+  }
+  
+  .footer__quote-text {
+    font-size: 12px;
+    padding: 0 24px;
+    line-height: 1.7;
+  }
+  
+  .footer__quote-text::before,
+  .footer__quote-text::after {
+    font-size: 28px;
+  }
+  
+  .footer__nav-link {
+    font-size: 13px;
+  }
+  
+  .footer__nav-title {
+    font-size: 11px;
+  }
+}
+
+/* ==========================================
+   アクセシビリティ: ハイコントラストモード
+========================================== */
+@media (prefers-contrast: high) {
+  .footer {
+    background: var(--footer-bg-solid);
+    border-top: 2px solid var(--footer-text-primary);
+  }
+  
+  .footer__nav-link {
+    text-decoration: underline;
+  }
+  
+  .footer__logo-icon {
+    border: 2px solid var(--footer-text-primary);
+  }
+}
+
+/* ==========================================
+   アクセシビリティ: ダークモード優先
+========================================== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --footer-bg: rgba(10, 15, 25, 0.98);
+    --footer-text-muted: #7b8aa8;
+  }
+}
+
+/* ==========================================
+   アクセシビリティ: モーション削減
+========================================== */
+@media (prefers-reduced-motion: reduce) {
+  .footer,
+  .footer__nav-link,
+  .footer__logo-icon,
+  .footer__glow,
+  .footer__top,
+  .footer__divider,
+  .footer__bottom {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  .footer__nav-link:hover,
+  .footer__logo:hover {
+    transform: none;
+  }
+  
+  .footer {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ==========================================
+   印刷用スタイル
+========================================== */
+@media print {
+  .footer {
+    background: white;
+    color: black;
+    border-top: 2px solid black;
+    page-break-inside: avoid;
+  }
+  
+  .footer__glow,
+  .footer::before,
+  .footer__divider::before {
+    display: none;
+  }
+  
+  .footer__nav-link {
+    color: black;
+    text-decoration: underline;
+  }
+  
+  .footer__nav-link[href^="#"]::after {
+    content: " (" attr(href) ")";
+    font-size: 10px;
+  }
+  
+  .footer__logo-icon {
+    background: black;
+    box-shadow: none;
+  }
+  
+  .footer__logo-text,
+  .footer__quote-text {
+    color: black !important;
+    -webkit-text-fill-color: black !important;
+    text-shadow: none;
+  }
+}

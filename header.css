@@ -1,0 +1,411 @@
+/* =========================================
+   header.css - BEM版
+   Persona Finder ヘッダー専用スタイル
+========================================= */
+
+/* ==========================================
+   CSS変数（一時的 - 後でvariables.cssに移行）
+========================================== */
+:root {
+  --header-bg: rgba(20, 28, 42, 0.85);
+  --header-bg-transparent: rgba(20, 28, 42, 0);
+  --header-border: rgba(255, 255, 255, 0.08);
+  --header-text-main: #e4f1ff;
+  --header-text-sub: #a7b6d4;
+  --accent-primary: #3b82f6;
+  --accent-secondary: #8b5cf6;
+  --accent-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  --font-ui: "Inter", "Noto Sans JP", sans-serif;
+}
+
+/* ==========================================
+   ヘッダー全体
+========================================== */
+.header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
+  background: var(--header-bg-transparent);
+  border-bottom: 1px solid transparent;
+  backdrop-filter: blur(0);
+  transition: background 0.3s ease, border-bottom 0.3s ease, 
+              box-shadow 0.3s ease, backdrop-filter 0.3s ease;
+}
+
+/* スクロール時の変化 */
+.header--scrolled {
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--header-border);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+/* ==========================================
+   コンテナ（中身配置）
+========================================== */
+.header__container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* ==========================================
+   ロゴ
+========================================== */
+.header__logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--header-text-main);
+  font-weight: 600;
+  font-size: 16px;
+  transition: opacity 0.3s ease;
+}
+
+.header__logo:hover {
+  opacity: 0.8;
+}
+
+.header__logo-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 4px;
+  background: var(--accent-gradient);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  margin-right: 10px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.header__logo:hover .header__logo-icon {
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+  transform: rotate(8deg);
+}
+
+.header__logo-text {
+  font-size: 18px;
+  font-weight: 800;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+  white-space: nowrap;
+}
+
+/* ==========================================
+   ナビゲーション
+========================================== */
+.header__nav {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-family: var(--font-ui);
+}
+
+/* ナビゲーションリンク */
+.header__nav-link {
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0.6;
+}
+
+.header__nav-link:hover {
+  opacity: 1;
+}
+
+/* スクロール後: 白抜き */
+.header--scrolled .header__nav-link {
+  color: var(--header-text-main);
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: unset;
+  background-clip: unset;
+  opacity: 0.8;
+}
+
+.header--scrolled .header__nav-link:hover {
+  opacity: 1;
+}
+
+/* ==========================================
+   ドロップダウン
+========================================== */
+.header__dropdown {
+  position: relative;
+}
+
+.header__dropdown-trigger {
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: opacity 0.3s ease;
+  cursor: pointer;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  opacity: 0.6;
+}
+
+.header__dropdown-trigger:hover {
+  opacity: 1;
+}
+
+/* スクロール後 */
+.header--scrolled .header__dropdown-trigger {
+  color: var(--header-text-main);
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: unset;
+  background-clip: unset;
+  opacity: 0.8;
+}
+
+.header--scrolled .header__dropdown-trigger:hover {
+  opacity: 1;
+}
+
+/* ドロップダウンメニュー */
+.header__dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 120%;
+  left: 0;
+  background: rgba(30, 40, 60, 0.96);
+  border: 1px solid var(--header-border);
+  border-radius: 6px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  padding: 8px 0;
+  min-width: 200px;
+  animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(-6px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.header__dropdown--open .header__dropdown-menu {
+  display: block;
+}
+
+/* ドロップダウンリンク */
+.header__dropdown-link {
+  display: block;
+  padding: 10px 16px;
+  font-size: 14px;
+  text-decoration: none;
+  color: #e4f1ff;
+  background: none;
+  -webkit-background-clip: unset;
+  -webkit-text-fill-color: unset;
+  background-clip: unset;
+  opacity: 0.8;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.header__dropdown-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  opacity: 1;
+}
+
+/* ==========================================
+   ハンバーガーメニュー（モバイル用）
+========================================== */
+.header__hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  z-index: 1001;
+}
+
+.header__hamburger-line {
+  width: 24px;
+  height: 2px;
+  background: var(--header-text-main);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  border-radius: 2px;
+}
+
+/* ハンバーガーメニューが開いている時 */
+.header__hamburger--active .header__hamburger-line:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.header__hamburger--active .header__hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.header__hamburger--active .header__hamburger-line:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ==========================================
+   レスポンシブ: モバイル (768px以下)
+========================================== */
+@media (max-width: 768px) {
+  /* ハンバーガーメニューボタンを表示 */
+  .header__hamburger {
+    display: flex;
+  }
+  
+  /* ナビゲーションをモバイル用に変更 */
+  .header__nav {
+    position: fixed;
+    top: 72px;
+    right: -100%;
+    width: 280px;
+    height: calc(100vh - 72px);
+    background: rgba(20, 28, 42, 0.98);
+    backdrop-filter: blur(12px);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 24px;
+    gap: 0;
+    transition: right 0.3s ease;
+    border-left: 1px solid var(--header-border);
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.3);
+  }
+  
+  .header__nav--active {
+    right: 0;
+  }
+  
+  .header__nav-link {
+    width: 100%;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+  
+  /* ドロップダウンをモバイル用に調整 */
+  .header__dropdown {
+    width: 100%;
+  }
+
+  .header__dropdown-trigger {
+    display: block;
+    width: 100%;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .header__dropdown-menu {
+    position: static;
+    width: 100%;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: none;
+    border: none;
+  }
+  
+  .header__dropdown--open .header__dropdown-menu {
+    display: block;
+  }
+  
+  .header__container {
+    padding: 16px 16px;
+  }
+}
+
+/* ==========================================
+   レスポンシブ: 小型モバイル (480px以下)
+========================================== */
+@media (max-width: 480px) {
+  .header__container {
+    padding: 16px 12px;
+  }
+
+  .header__logo-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .header__logo-text {
+    font-size: 16px;
+  }
+
+  .header__nav {
+    width: 260px;
+  }
+}
+
+/* ==========================================
+   アクセシビリティ: モーション削減対応
+========================================== */
+@media (prefers-reduced-motion: reduce) {
+  .header,
+  .header__logo-icon,
+  .header__nav-link,
+  .header__dropdown-trigger,
+  .header__dropdown-menu,
+  .header__hamburger-line {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ==========================================
+   印刷用スタイル
+========================================== */
+@media print {
+  .header {
+    position: static;
+    background: white;
+    border-bottom: 2px solid black;
+    box-shadow: none;
+  }
+
+  .header__hamburger {
+    display: none;
+  }
+
+  .header__nav {
+    display: flex;
+    position: static;
+    width: auto;
+    height: auto;
+    background: none;
+    flex-direction: row;
+    padding: 0;
+    gap: 16px;
+  }
+
+  .header__nav-link,
+  .header__dropdown-trigger {
+    color: black !important;
+    background: none !important;
+    -webkit-text-fill-color: black !important;
+  }
+
+  .header__dropdown-menu {
+    display: none !important;
+  }
+}
