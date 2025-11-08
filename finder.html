@@ -3,48 +3,52 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Persona Finder</title>
+  <title>Persona Finder - Single Column</title>
   <meta name="description" content="Jung理論に基づく認知機能診断アプリケーション">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="assets/css/finder.css">
+  
+  <link rel="stylesheet" href="./assets/css/finder.css">
 </head>
 <body>
-  <div class="wrap" role="application">
-    <main class="main" id="app" aria-live="polite">
-      <header class="app-head">
-        <div class="logo" aria-hidden="true">Ψ</div>
-        <div>
-          <h1>Cognitive Function Analysis</h1>
-          <p class="lead">Jungian typology • Evidence-based assessment</p>
-        </div>
-      </header>
-
-      <div class="placeholder">
-        <p style="color:var(--text-muted);text-align:center;padding:var(--space-xl);">
-          読み込みが完了するとここに質問が表示されます。
-        </p>
+  <!-- ヘッダー -->
+  <header class="app-header">
+    <div class="header-content">
+      <div class="logo">Ψ</div>
+      <div class="header-text">
+        <h1 class="app-title">Cognitive Function Analysis</h1>
+        <p class="app-subtitle">Jungian typology • Evidence-based assessment</p>
       </div>
-    </main>
+    </div>
+  </header>
 
-    <aside class="side" aria-label="診断の進捗状況">
-      <div class="summary">
-        <strong style="display:block;margin-bottom:var(--space-sm);">進捗状況</strong>
-        <div class="progress" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-          <i></i>
-        </div>
+  <!-- メインコンテンツ -->
+  <main class="main-container">
+    <!-- 質問画面 -->
+    <div id="question-screen">
+      <!-- 進捗セクション -->
+      <section class="progress-section" id="progress-section">
+        <!-- JSで動的生成 -->
+      </section>
 
-        <div class="score-list" id="scoreList"></div>
+      <!-- 質問セクション -->
+      <section class="question-section" id="question-content">
+        <!-- JSで動的生成 -->
+      </section>
 
-        <footer class="note">
-          データは端末に保存されません。<br>
-          結果は参考情報としてご利用ください。
-        </footer>
-      </div>
-    </aside>
-  </div>
+      <!-- ナビゲーション -->
+      <nav class="navigation">
+        <button class="btn btn-back" id="btn-back" onclick="goBack()">← 前の質問</button>
+      </nav>
+    </div>
+
+    <!-- 結果画面 -->
+    <div id="result-screen" class="result-screen">
+      <!-- JSで動的生成 -->
+    </div>
+  </main>
 
   <script type="module" src="./app.js"></script>
 </body>
