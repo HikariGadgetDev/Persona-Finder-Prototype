@@ -86,6 +86,7 @@
               <ul class="footer__nav-list">
                 <li><a href="function.html" class="footer__nav-link">8つの機能</a></li>
                 <li><a href="index.html#types" class="footer__nav-link">16のタイプ(未実装)</a></li>
+                <li><a href="function.html" class="footer__nav-link">計算処理解説(未実装)</a></li>
               </ul>
             </div>
 
