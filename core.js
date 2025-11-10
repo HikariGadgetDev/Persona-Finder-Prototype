@@ -143,15 +143,6 @@ function checkContradiction(valueA, valueB, questionA, questionB) {
 }
 
 /**
- * 矛盾の深刻度を計算(0-1)
- */
-function calculateSeverity(valueA, valueB) {
-    const maxDiff = 4;
-    const actualDiff = Math.abs(valueA - valueB);
-    return Math.min(actualDiff / maxDiff, 1.0);
-}
-
-/**
  * 回答の矛盾を検出する
  * @param {Object} answers - { questionId: { value, isReverse } }
  * @param {Array} questions - 質問データ配列
@@ -159,6 +150,7 @@ function calculateSeverity(valueA, valueB) {
  */
 export function detectContradictions(answers, questions) {
     const contradictions = [];
+    const checkedPairs = new Set(); // 重複チェック用
     const answeredQuestions = questions.filter(q => answers[q.id]);
     
     for (const question of answeredQuestions) {
@@ -168,6 +160,13 @@ export function detectContradictions(answers, questions) {
             const contradictIds = question.related.contradicts;
             
             for (const contradictId of contradictIds) {
+                // ペアIDを作成（常に小さい方を先に）
+                const pairId = [question.id, contradictId].sort().join('-');
+                
+                // すでにチェック済みならスキップ
+                if (checkedPairs.has(pairId)) continue;
+                checkedPairs.add(pairId);
+                
                 const contradictAnswer = answers[contradictId];
                 
                 if (contradictAnswer) {
@@ -186,7 +185,12 @@ export function detectContradictions(answers, questions) {
                             questionB: contradictId,
                             valueA: answer.value,
                             valueB: contradictAnswer.value,
-                            severity: calculateSeverity(answer.value, contradictAnswer.value)
+                            severity: calculateSeverity(
+                                answer.value, 
+                                contradictAnswer.value,
+                                question.reverse || false,
+                                contradictQuestion.reverse || false
+                            )
                         });
                     }
                 }
@@ -204,26 +208,56 @@ export function detectContradictions(answers, questions) {
 }
 
 /**
+ * 矛盾の深刻度を計算(0-1)
+ * 正規化後の値の差を使用
+ */
+function calculateSeverity(valueA, valueB, isReverseA, isReverseB) {
+    // 正規化（逆転項目を考慮）
+    const normalizedA = isReverseA ? (6 - valueA) : valueA;
+    const normalizedB = isReverseB ? (6 - valueB) : valueB;
+    
+    // 正規化後の差の絶対値（0-4）
+    const diff = Math.abs(normalizedA - normalizedB);
+    
+    // 0-1にスケール
+    // diff=4（5と1）→ 深刻度1.0（完全な矛盾）
+    // diff=3（5と2）→ 深刻度0.75
+    // diff=2（5と3）→ 深刻度0.5（軽度の矛盾）
+    return diff / 4.0;
+}
+
+/**
  * 一貫性スコアを計算(0-100)
+ * 
+ * 計算ロジック:
+ * 1. 矛盾がない → 100%
+ * 2. 矛盾率 = (矛盾件数 / 矛盾可能なペア数) ← より厳密
+ * 3. 深刻度加重 = 矛盾率 × 平均深刻度
+ * 4. スコア = 100 - (深刻度加重 × 200) ← より敏感に
  */
 function calculateConsistencyScore(contradictions, totalAnswered) {
     if (totalAnswered === 0) return 100;
     if (contradictions.length === 0) return 100;
     
-    // 矛盾の総深刻度を計算
+    // 矛盾の総深刻度
     const totalSeverity = contradictions.reduce((sum, c) => sum + c.severity, 0);
     
-    // 矛盾の平均深刻度
+    // 平均深刻度（0-1）
     const avgSeverity = totalSeverity / contradictions.length;
     
-    // 矛盾の割合（矛盾件数 / 総回答数）
-    const contradictionRate = contradictions.length / totalAnswered;
+    // 理論上の最大矛盾件数（answered questions の約1/4が矛盾ペアと仮定）
+    // 実際にはrelated.contradictsの数に依存するが、概算として
+    const maxPossibleContradictions = Math.max(1, totalAnswered / 4);
     
-    // 一貫性スコア = 100 - (矛盾率 × 100 × 平均深刻度)
-    // 例: 27件の矛盾、64問、平均深刻度0.8
-    //     contradictionRate = 27/64 = 0.42
-    //     score = 100 - (0.42 × 100 × 0.8) = 100 - 33.6 = 66.4
-    const score = Math.max(0, 100 - (contradictionRate * 100 * avgSeverity));
+    // 矛盾率（0-1以上）
+    const contradictionRate = Math.min(1, contradictions.length / maxPossibleContradictions);
+    
+    // 深刻度加重（0-1）
+    const weightedRate = contradictionRate * avgSeverity;
+    
+    // スコア計算（より敏感に: ×200で矛盾が多いと急激に下がる）
+    // 例: 矛盾率0.5, 深刻度0.8 → 0.5×0.8×200 = 80 → スコア20
+    const score = Math.max(0, 100 - (weightedRate * 200));
     
     return Math.round(score);
 }
@@ -285,14 +319,14 @@ export function determineMBTIType(functionScores, COGNITIVE_STACKS) {
     
     const [firstType, firstScore] = sortedTypes[0];
     const [secondType, secondScore] = sortedTypes[1] || [null, 0];
+    const [thirdType, thirdScore] = sortedTypes[2] || [null, 0];
     
-    const scoreDifference = firstScore - secondScore;
-    const scoreSum = Math.abs(firstScore) + Math.abs(secondScore) + CONFIDENCE_CALCULATION_EPSILON;
-    const rawConfidence = 100 * (scoreDifference / scoreSum);
-    
-    const confidence = Math.max(
-        CONFIDENCE_BOUNDS.MIN,
-        Math.min(CONFIDENCE_BOUNDS.MAX, Math.round(rawConfidence))
+    // 改善された確信度計算
+    const confidence = calculateImprovedConfidence(
+        firstScore, 
+        secondScore, 
+        thirdScore,
+        sortedTypes
     );
     
     return {
@@ -301,6 +335,49 @@ export function determineMBTIType(functionScores, COGNITIVE_STACKS) {
         top2: [firstType, secondType],
         typeScores: typeScores
     };
+}
+
+/**
+ * 改善された確信度計算
+ * 
+ * 考慮要素:
+ * 1. 1位と2位の差（主要因）
+ * 2. 1位と3位の差（上位の分散）
+ * 3. 1位のスコア絶対値（十分な得点があるか）
+ * 4. 2位と3位の差（2位の明確さ）
+ */
+function calculateImprovedConfidence(firstScore, secondScore, thirdScore, sortedTypes) {
+    // スコア差による基本確信度（0-100）
+    const scoreDiff = firstScore - secondScore;
+    const scoreSum = Math.abs(firstScore) + Math.abs(secondScore) + CONFIDENCE_CALCULATION_EPSILON;
+    const baseConfidence = 100 * (scoreDiff / scoreSum);
+    
+    // ボーナス1: 1位のスコアが十分に高い（+0〜15点）
+    // 全タイプの平均を計算
+    const avgScore = sortedTypes.reduce((sum, [, score]) => sum + score, 0) / sortedTypes.length;
+    const scoreBonus = firstScore > avgScore * 1.5 ? 15 : 
+                       firstScore > avgScore * 1.2 ? 10 : 
+                       firstScore > avgScore ? 5 : 0;
+    
+    // ボーナス2: 1位と3位の差が大きい（+0〜10点）
+    const thirdDiff = firstScore - thirdScore;
+    const thirdGapBonus = thirdDiff > (firstScore * 0.4) ? 10 :
+                          thirdDiff > (firstScore * 0.3) ? 7 :
+                          thirdDiff > (firstScore * 0.2) ? 4 : 0;
+    
+    // ペナルティ: 2位と3位が接近している（-0〜10点）
+    const secondThirdDiff = Math.abs(secondScore - thirdScore);
+    const secondThirdGap = secondThirdDiff / (Math.abs(secondScore) + CONFIDENCE_CALCULATION_EPSILON);
+    const proximityPenalty = secondThirdGap < 0.1 ? 10 :
+                            secondThirdGap < 0.2 ? 5 : 0;
+    
+    // 最終確信度
+    const finalConfidence = baseConfidence + scoreBonus + thirdGapBonus - proximityPenalty;
+    
+    return Math.max(
+        CONFIDENCE_BOUNDS.MIN,
+        Math.min(CONFIDENCE_BOUNDS.MAX, Math.round(finalConfidence))
+    );
 }
 
 /**

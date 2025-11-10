@@ -1,117 +1,150 @@
+// ============================================
+// handlers.js - Event Handlers
+// ============================================
 
-/**
- * useHandlers - イベントハンドラーフック
- */
 export function useHandlers(diagnosisState, questions, calculateScore, storage) {
-    const { getState, actions } = diagnosisState;
-    let isProcessing = false;
+    const { getState, setState } = diagnosisState;
 
     return {
         handleAnswer: (value, event) => {
-            if (isProcessing) return;
-            isProcessing = true;
-
             const state = getState();
             const question = questions[state.currentQuestion];
-            const funcType = question.type;
             const isReverse = question.reverse || false;
-            const oldAnswer = state.answers[question.id];
 
-            // 前回のスコアを差し引く
-            if (oldAnswer !== undefined) {
-                const oldScore = calculateScore(oldAnswer.value, isReverse);
-                actions.updateFunctionScore(funcType, -oldScore);
-            }
-
-            // 新しいスコアを加算
-            const delta = calculateScore(value, isReverse);
-            actions.updateFunctionScore(funcType, delta);
-            actions.setAnswer(question.id, value, isReverse);
-
-            // ボタンの選択状態を更新
-            if (event && event.currentTarget) {
-                const buttons = document.querySelectorAll('.option');
-                buttons.forEach(btn => {
-                    btn.classList.remove('selected');
-                    btn.setAttribute('aria-checked', 'false');
-                });
-                event.currentTarget.classList.add('selected');
-                event.currentTarget.setAttribute('aria-checked', 'true');
-            }
-
-            // 次へ
-            setTimeout(() => {
-                if (state.currentQuestion < questions.length - 1) {
-                    actions.nextQuestion();
-                } else {
-                    actions.showResult();
+            // 回答を保存
+            setState(prev => ({
+                ...prev,
+                answers: {
+                    ...prev.answers,
+                    [question.id]: { value, isReverse }
                 }
-                isProcessing = false;
-            }, 200);
+            }));
+
+            // スコアを更新
+            const delta = calculateScore(value, isReverse);
+            setState(prev => ({
+                ...prev,
+                functionScores: {
+                    ...prev.functionScores,
+                    [question.function]: prev.functionScores[question.function] + delta
+                }
+            }));
+
+            // Shadow説明フラグを保存
+            if (event?.currentTarget?.closest('.option-shadow')) {
+                storage.shadowSeen.set();
+            }
+
+            // 最後の質問なら結果表示、そうでなければ次の質問へ
+            setTimeout(() => {
+                const currentState = getState();
+                if (currentState.currentQuestion >= questions.length - 1) {
+                    setState(prev => ({ ...prev, showResult: true }));
+                } else {
+                    setState(prev => ({
+                        ...prev,
+                        currentQuestion: prev.currentQuestion + 1
+                    }));
+                }
+            }, 100);
         },
 
         goBack: () => {
-            actions.prevQuestion();
+            const state = getState();
+            if (state.currentQuestion > 0) {
+                setState(prev => ({
+                    ...prev,
+                    currentQuestion: prev.currentQuestion - 1
+                }));
+            }
         },
 
         goNext: () => {
             const state = getState();
-            const currentQuestion = questions[state.currentQuestion];
-            if (state.answers[currentQuestion.id]) {
-                actions.nextQuestion();
+            const question = questions[state.currentQuestion];
+            
+            if (state.answers[question.id] && state.currentQuestion < questions.length - 1) {
+                setState(prev => ({
+                    ...prev,
+                    currentQuestion: prev.currentQuestion + 1
+                }));
             }
         },
 
         reset: () => {
-            if (confirm('診断をリセットしますか?\n\n現在の回答データが全て削除されます。\nこの操作は取り消せません。')) {
-                storage.clearAll();
-                actions.reset();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+            // アラート不要、即座にリセット
+            storage.clearAll();
+            
+            // 初期状態に戻す
+            setState({
+                currentQuestion: 0,
+                answers: {},
+                functionScores: {
+                    Ni: 0, Ne: 0, Si: 0, Se: 0,
+                    Ti: 0, Te: 0, Fi: 0, Fe: 0
+                },
+                showResult: false
+            });
+
+            // 結果画面から質問画面に戻る
+            const questionScreen = document.getElementById('question-screen');
+            const resultScreen = document.getElementById('result-screen');
+            
+            if (questionScreen && resultScreen) {
+                questionScreen.style.display = 'block';
+                resultScreen.style.display = 'none';
             }
+
+            // ページトップにスクロール
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         },
 
         handleKeyboardNav: (event, currentValue) => {
+            const state = getState();
             const options = Array.from(document.querySelectorAll('.option'));
-            const currentIndex = options.findIndex(btn => 
-                parseInt(btn.getAttribute('data-value')) === currentValue
+            const currentIndex = options.findIndex(opt => 
+                parseInt(opt.dataset.value) === currentValue
             );
-            
-            let nextIndex = currentIndex;
-            
-            switch(event.key) {
+
+            switch (event.key) {
                 case 'ArrowLeft':
-                case 'ArrowUp':
                     event.preventDefault();
-                    nextIndex = Math.max(0, currentIndex - 1);
+                    if (currentIndex > 0) {
+                        options[currentIndex - 1].focus();
+                    }
                     break;
+
                 case 'ArrowRight':
-                case 'ArrowDown':
                     event.preventDefault();
-                    nextIndex = Math.min(options.length - 1, currentIndex + 1);
+                    if (currentIndex < options.length - 1) {
+                        options[currentIndex + 1].focus();
+                    }
                     break;
+
                 case 'Home':
                     event.preventDefault();
-                    nextIndex = 0;
+                    options[0].focus();
                     break;
+
                 case 'End':
                     event.preventDefault();
-                    nextIndex = options.length - 1;
+                    options[options.length - 1].focus();
                     break;
+
                 case 'Enter':
                 case ' ':
                     event.preventDefault();
-                    const value = parseInt(options[currentIndex].getAttribute('data-value'));
-                    this.handleAnswer(value, { currentTarget: options[currentIndex] });
-                    return;
+                    this.handleAnswer(currentValue, event);
+                    break;
+
                 default:
-                    return;
-            }
-            
-            if (nextIndex !== currentIndex && options[nextIndex]) {
-                options[nextIndex].focus();
-                options.forEach((opt, idx) => {
-                    opt.tabIndex = idx === nextIndex ? 0 : -1;
-                });
+                    // 1-5のキーで直接選択
+                    const num = parseInt(event.key);
+                    if (num >= 1 && num <= 5) {
+                        event.preventDefault();
+                        this.handleAnswer(num, event);
+                    }
+                    break;
             }
         }
     };

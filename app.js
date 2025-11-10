@@ -10,7 +10,7 @@ import {
     calculateScore, 
     determineMBTITypeWithConsistency,
     getNormalizedScore,
-    FUNCTIONS as CORE_FUNCTIONS
+    FUNCTIONS
 } from './core.js';
 
 // ============================================
@@ -23,7 +23,6 @@ let mbtiDescriptions = {};
 let diagnosisState = null;
 let handlers = null;
 let storage = null;
-let FUNCTIONS = CORE_FUNCTIONS; // core.jsのFUNCTIONSを使用
 
 // ============================================
 // ユーティリティ: 質問のシャッフル
@@ -49,7 +48,7 @@ function fisherYatesShuffleWithSeed(array, seed) {
 }
 
 function shuffleQuestionsWithConstraints(questions, seed) {
-    const maxAttempts = 1000;
+    const maxAttempts = 5000; // 1000 → 5000に増やす
     
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
         const currentSeed = seed + attempt;
@@ -68,7 +67,31 @@ function shuffleQuestionsWithConstraints(questions, seed) {
         }
     }
     
-    console.warn('制約付きシャッフルが1000回で完了しませんでした。');
+    // 5000回試行しても制約を満たせない場合、制約を緩和
+    console.warn(`制約付きシャッフルが${maxAttempts}回で完了しませんでした。制約を緩和します。`);
+    
+    // 制約緩和版: 3連続まで許容
+    for (let attempt = 0; attempt < 1000; attempt++) {
+        const currentSeed = seed + maxAttempts + attempt;
+        const shuffled = fisherYatesShuffleWithSeed(questions, currentSeed);
+        
+        let hasTripleConsecutive = false;
+        for (let i = 2; i < shuffled.length; i++) {
+            if (shuffled[i].function === shuffled[i - 1].function && 
+                shuffled[i].function === shuffled[i - 2].function) {
+                hasTripleConsecutive = true;
+                break;
+            }
+        }
+        
+        if (!hasTripleConsecutive) {
+            console.info('制約緩和版シャッフル成功（3連続まで許容）');
+            return { shuffled, seed: currentSeed };
+        }
+    }
+    
+    // それでもダメなら諦めて普通にシャッフル
+    console.warn('制約なしシャッフルを使用します');
     return { shuffled: fisherYatesShuffleWithSeed(questions, seed), seed };
 }
 
@@ -248,6 +271,7 @@ function updateProgressSection(state, questions) {
     
     const progressSection = document.getElementById('progress-section');
     const previousType = progressSection.dataset.currentType;
+    const wasOpen = document.getElementById('scores-list')?.classList.contains('open');
     
     if (!progressSection.dataset.initialized || previousType !== provisionalType) {
         progressSection.innerHTML = ProgressSection.render(
@@ -261,6 +285,20 @@ function updateProgressSection(state, questions) {
         );
         progressSection.dataset.initialized = 'true';
         progressSection.dataset.currentType = provisionalType;
+        
+        // タイプが変わっても開閉状態を復元
+        if (wasOpen) {
+            const scoresList = document.getElementById('scores-list');
+            const toggleText = document.getElementById('toggle-text');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            if (scoresList) {
+                scoresList.classList.add('open');
+                if (toggleText) toggleText.textContent = 'スコア詳細を非表示';
+                if (toggleIcon) toggleIcon.textContent = '▲';
+            }
+        }
+        
         return;
     }
     
@@ -288,10 +326,8 @@ function updateProgressSection(state, questions) {
                 : '');
     }
     
-    const scoresList = document.getElementById('scores-list');
-    if (scoresList && scoresList.classList.contains('open')) {
-        updateScoresList(state, questions);
-    }
+    // スコアリストを常に更新（開いていなくても）
+    updateScoresList(state, questions);
 }
 
 function updateScoresList(state, questions) {
@@ -304,10 +340,18 @@ function updateScoresList(state, questions) {
     orderedFunctions.forEach(key => {
         const normalizedValue = getNormalizedScore(currentScores[key]);
         const valueEl = document.querySelector(`[data-score-key="${key}"] .score-mini-value`);
-        if (valueEl && valueEl.textContent !== String(normalizedValue)) {
-            valueEl.textContent = normalizedValue;
-            valueEl.style.animation = 'none';
-            setTimeout(() => valueEl.style.animation = 'scoreUpdate 0.3s ease', 10);
+        
+        if (valueEl) {
+            const currentDisplayValue = parseInt(valueEl.textContent);
+            
+            // 値が変わった場合のみアニメーション
+            if (currentDisplayValue !== normalizedValue) {
+                valueEl.textContent = normalizedValue;
+                valueEl.style.animation = 'none';
+                // アニメーションをリセットして再適用
+                void valueEl.offsetWidth; // リフロー強制
+                valueEl.style.animation = 'scoreUpdate 0.3s ease';
+            }
         }
     });
 }

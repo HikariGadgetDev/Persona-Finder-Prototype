@@ -501,29 +501,14 @@ export const ResultCard = {
     },
 
     _renderScoresCard(functionScores, FUNCTIONS, getNormalizedScore) {
-        // デバッグ
-        console.log('_renderScoresCard called');
-        console.log('functionScores:', functionScores);
-        console.log('FUNCTIONS:', FUNCTIONS);
-        console.log('getNormalizedScore:', getNormalizedScore);
-        
-        if (!FUNCTIONS) {
-            console.error('FUNCTIONSがundefinedです！');
-            return '<div style="color: red;">エラー: FUNCTIONSが定義されていません</div>';
-        }
-        
         const sortedScores = Object.entries(functionScores)
-            .map(([key, val]) => {
-                const func = FUNCTIONS[key];
-                if (!func) {
-                    console.error(`FUNCTIONS[${key}]が存在しません`);
-                }
-                return {
-                    key,
-                    value: getNormalizedScore(val),
-                    func: func || { fullName: key, description: '' }
-                };
-            })
+            .filter(([key]) => key in FUNCTIONS) // FUNCTIONSに存在するもののみ
+            .map(([key, val]) => ({
+                key,
+                value: getNormalizedScore(val),
+                rawValue: val, // デバッグ用に生の値も保持
+                func: FUNCTIONS[key]
+            }))
             .sort((a, b) => b.value - a.value);
 
         return `
@@ -546,5 +531,11 @@ export const ResultCard = {
                 </div>
             </div>
         `;
+    },
+
+    _escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 };
