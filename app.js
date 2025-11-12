@@ -1,5 +1,5 @@
 // ============================================
-// app.js - Application Entry Point (リファクタ版)
+// app.js - Application Entry Point (3モード対応版)
 // ============================================
 
 import { useDiagnosisState, useLocalStorage } from './hooks.js';
@@ -12,6 +12,43 @@ import {
     getNormalizedScore,
     FUNCTIONS
 } from './core.js';
+
+// ============================================
+// URLパラメータ取得
+// ============================================
+
+/**
+ * URLからモードパラメータを取得
+ * @returns {string} モード ('simple' | 'standard' | 'detail')
+ */
+function getModeFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const mode = params.get('mode');
+    const validModes = ['simple', 'standard', 'detail'];
+    
+    if (mode && validModes.includes(mode)) {
+        console.info(`[App] URLパラメータからモード取得: ${mode}`);
+        return mode;
+    }
+    
+    // デフォルトはstandard
+    console.info('[App] デフォルトモード使用: standard');
+    return 'standard';
+}
+
+/**
+ * モード名を日本語表示用に変換
+ * @param {string} mode - モードID
+ * @returns {string} 日本語名
+ */
+function getModeDisplayName(mode) {
+    const names = {
+        simple: 'クイック診断',
+        standard: 'スタンダード診断',
+        detail: '詳細診断'
+    };
+    return names[mode] || mode;
+}
 
 // ============================================
 // 型定義 (JSDoc)
@@ -45,6 +82,7 @@ import {
  * @property {ReturnType<typeof useDiagnosisState>} diagnosisState - 診断状態
  * @property {ReturnType<typeof useHandlers>} handlers - イベントハンドラー
  * @property {ReturnType<typeof useLocalStorage>} storage - ストレージ
+ * @property {string} mode - 現在のモード
  */
 
 // ============================================
@@ -71,6 +109,7 @@ const ERROR_MESSAGES = {
     NO_QUESTIONS: '質問データが読み込まれませんでした',
     NETWORK_ERROR: 'ネットワークエラーが発生しました。オフラインモードで起動します。',
     JSON_PARSE_ERROR: 'データの読み込みに失敗しました。バックアップデータを使用します。',
+    MODE_MISMATCH: 'モードが変更されたため、保存データをクリアしました'
 };
 
 // ============================================
@@ -352,6 +391,28 @@ function showRestoreNotification(state, questions) {
 }
 
 /**
+ * モード変更通知を表示
+ * @param {string} mode - 新しいモード
+ */
+function showModeChangeNotification(mode) {
+    const notification = document.createElement('div');
+    notification.className = 'restore-notification';
+    notification.innerHTML = `
+        <div style="font-weight: 600; margin-bottom: 4px;">📋 ${getModeDisplayName(mode)}</div>
+        <div style="font-size: 12px; opacity: 0.8;">
+            ${ERROR_MESSAGES.MODE_MISMATCH}
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.classList.add('fade-out');
+        setTimeout(() => notification.remove(), 300);
+    }, CONFIG.NOTIFICATION_DURATION);
+}
+
+/**
  * 初期フォーカスを設定
  */
 function setInitialFocus() {
@@ -561,7 +622,8 @@ function renderResult(state) {
             appContext.cognitiveStacks,
             FUNCTIONS,
             getNormalizedScore,
-            state.functionScores
+            state.functionScores,
+            appContext.questions
         );
     }
 }
@@ -710,12 +772,20 @@ async function initializeApplication() {
     showLoadingScreen();
     
     try {
+        // URLパラメータからモード取得
+        const mode = getModeFromURL();
+        
+        // ページタイトルにモード表示
+        document.title = `Persona Finder - ${getModeDisplayName(mode)}`;
+        
         // データ読み込み
-        const data = await initializeData('simple');
+        const data = await initializeData(mode);
         
         if (!data.questions || data.questions.length === 0) {
             throw new Error(ERROR_MESSAGES.NO_QUESTIONS);
         }
+        
+        console.info(`[App] モード: ${mode}, 質問数: ${data.questions.length}`);
         
         // ストレージ初期化
         const storage = useLocalStorage();
@@ -737,7 +807,8 @@ async function initializeApplication() {
             mbtiDescriptions: data.mbtiDescriptions,
             diagnosisState,
             handlers,
-            storage
+            storage,
+            mode
         };
         
         // Shadow説明の表示履歴チェック
@@ -751,8 +822,21 @@ async function initializeApplication() {
         
         // 保存状態の復元
         const savedState = storage.loadState();
-        if (savedState) {
+        const savedMode = storage.getMode();
+        
+        if (savedState && savedMode === mode) {
+            // モードが一致する場合のみ復元
             diagnosisState.setState(savedState);
+            console.info(`[App] 保存状態を復元 (mode: ${savedMode})`);
+        } else if (savedState && savedMode !== mode) {
+            // モードが変わった場合はクリア
+            console.warn(`[App] モード不一致 (保存: ${savedMode}, 現在: ${mode}). 状態をリセット`);
+            storage.clearAll();
+            storage.setMode(mode);
+            showModeChangeNotification(mode);
+        } else {
+            // 初回起動
+            storage.setMode(mode);
         }
         
         // グローバルハンドラー登録
@@ -767,7 +851,7 @@ async function initializeApplication() {
         render(state, appContext.questions);
         
         // 復元通知
-        if (savedState && state.currentQuestion > 0) {
+        if (savedState && savedMode === mode && state.currentQuestion > 0) {
             showRestoreNotification(state, appContext.questions);
         }
         

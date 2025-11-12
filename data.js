@@ -1,5 +1,5 @@
 // ============================================
-// data.js - JSON Data Loader (リファクタ版)
+// data.js - JSON Data Loader (3モード対応版)
 // ============================================
 
 // ============================================
@@ -34,8 +34,8 @@
 // 定数定義
 // ============================================
 
-const VALID_MODES = ['simple', 'detailed'];
-const DEFAULT_MODE = 'simple';
+const VALID_MODES = ['simple', 'standard', 'detail'];
+const DEFAULT_MODE = 'standard';
 
 const DATA_PATHS = {
     QUESTIONS: (mode) => `data/questions-${mode}.json`,
@@ -60,7 +60,7 @@ let cachedConfig = null;
 
 /**
  * モードを設定
- * @param {string} mode - 'simple' または 'detailed'
+ * @param {string} mode - 'simple', 'standard', または 'detail'
  */
 export function setMode(mode) {
     if (!VALID_MODES.includes(mode)) {
@@ -114,7 +114,7 @@ async function fetchJSON(url) {
 
 /**
  * 質問データを読み込む
- * @param {string} [mode] - 'simple' または 'detailed'
+ * @param {string} [mode] - 'simple', 'standard', または 'detail'
  * @returns {Promise<Question[]>} 質問配列
  */
 export async function loadQuestions(mode = currentMode) {
@@ -127,6 +127,7 @@ export async function loadQuestions(mode = currentMode) {
             throw new Error(ERROR_MESSAGES.NO_QUESTIONS(mode));
         }
         
+        console.info(`[Data] 質問データ読み込み成功: ${mode} (${data.questions.length}問)`);
         return data.questions;
         
     } catch (error) {
@@ -153,6 +154,7 @@ export async function loadMBTIConfig() {
         }
         
         cachedConfig = config;
+        console.info('[Data] MBTI設定読み込み成功');
         return config;
         
     } catch (error) {
@@ -170,11 +172,11 @@ export async function loadMBTIConfig() {
 }
 
 // ============================================
-// 同期的アクセス（後方互換性）
+// 同期的アクセス(後方互換性)
 // ============================================
 
 /**
- * 質問データを取得（同期的）
+ * 質問データを取得(同期的)
  * @deprecated 初回は空配列を返す可能性があります。initializeData()を使用してください。
  * @param {string} [mode] - モード
  * @returns {Question[]} 質問配列
@@ -190,19 +192,25 @@ export function getQuestionsByMode(mode = currentMode) {
     return cachedQuestions;
 }
 
-// デフォルトエクスポート（非推奨、後方互換性のため）
+// デフォルトエクスポート(非推奨、後方互換性のため)
 export const questions = [];
 
 // ============================================
-// 初期化関数（推奨）
+// 初期化関数(推奨)
 // ============================================
 
 /**
  * データを事前読み込み
- * @param {string} [mode] - 'simple' または 'detailed'
+ * @param {string} [mode] - 'simple', 'standard', または 'detail'
  * @returns {Promise<InitializedData>} 初期化されたデータ
  */
 export async function initializeData(mode = DEFAULT_MODE) {
+    // モード検証
+    if (!VALID_MODES.includes(mode)) {
+        console.warn(`[Data] 無効なモード: ${mode}. デフォルト(${DEFAULT_MODE})を使用します`);
+        mode = DEFAULT_MODE;
+    }
+    
     try {
         // 並行読み込み
         const [questionsData, configData] = await Promise.all([
@@ -213,6 +221,7 @@ export async function initializeData(mode = DEFAULT_MODE) {
         // キャッシュ更新
         cachedQuestions = questionsData;
         cachedConfig = configData;
+        currentMode = mode;
         
         console.info(`[Data] データ初期化完了 (mode: ${mode}, questions: ${questionsData.length})`);
         
@@ -326,4 +335,50 @@ export function validateQuestions(questions) {
         isValid: errors.length === 0,
         errors
     };
+}
+
+// ============================================
+// モード情報取得ユーティリティ
+// ============================================
+
+/**
+ * 利用可能なモード一覧を取得
+ * @returns {string[]} モードIDの配列
+ */
+export function getAvailableModes() {
+    return [...VALID_MODES];
+}
+
+/**
+ * モード情報を取得
+ * @param {string} mode - モードID
+ * @returns {Object|null} モード情報
+ */
+export function getModeInfo(mode) {
+    const modeInfo = {
+        simple: {
+            id: 'simple',
+            name: 'クイック診断',
+            questions: 32,
+            duration: '3-5分',
+            description: '最短3分で完了。認知機能の傾向を素早くチェック'
+        },
+        standard: {
+            id: 'standard',
+            name: 'スタンダード診断',
+            questions: 64,
+            duration: '7-10分',
+            description: 'バランスの取れた診断。推奨モード',
+            recommended: true
+        },
+        detail: {
+            id: 'detail',
+            name: '詳細診断',
+            questions: 96,
+            duration: '12-15分',
+            description: '最も精密な診断。より正確な結果を求める方へ'
+        }
+    };
+    
+    return modeInfo[mode] || null;
 }

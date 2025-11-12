@@ -303,12 +303,22 @@ export const ResultCard = {
      * @param {Object} FUNCTIONS - 機能定義
      * @param {Function} getNormalizedScore - スコア正規化関数
      * @param {Object} functionScores - 機能スコア
+     * @param {Array} questions - 質問配列(矛盾表示用)
      * @returns {string} HTMLマークアップ
      */
-    render(result, mbtiDescriptions, COGNITIVE_STACKS, FUNCTIONS, getNormalizedScore, functionScores) {
-        const { type: mbtiType, confidence, originalConfidence, consistency, contradictionCount, warning, top2, typeScores } = result;
+    render(result, mbtiDescriptions, COGNITIVE_STACKS, FUNCTIONS, getNormalizedScore, functionScores, questions) {
+        const { type: mbtiType, confidence, originalConfidence, consistency, contradictionCount, warning, top2, typeScores, contradictions } = result;
         const desc = mbtiDescriptions[mbtiType];
-        const showAlternative = confidence < 40;
+        
+        // 多面性に応じて表示する代替タイプ数を決定
+        const versatilityScore = 100 - confidence;
+        const showAlternatives = versatilityScore >= 30;
+        const showMultiple = versatilityScore >= 60;
+        
+        // 上位タイプを取得
+        const sortedTypes = Object.entries(typeScores)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3);
 
         return `
             <div class="result-header" role="banner">
@@ -317,8 +327,9 @@ export const ResultCard = {
             </div>
 
             ${this._renderTypeCard(mbtiType, desc)}
-            ${showAlternative ? this._renderAlternativeTypeCard(top2, mbtiDescriptions, typeScores, confidence) : ''}
+            ${showAlternatives ? this._renderAlternativeTypesCard(sortedTypes, mbtiDescriptions, typeScores, versatilityScore, showMultiple) : ''}
             ${this._renderMetricsCard(confidence, originalConfidence, consistency, contradictionCount, warning)}
+            ${contradictionCount > 0 ? this._renderContradictionsCard(contradictions, questions) : ''}
             ${this._renderStackCard(mbtiType, COGNITIVE_STACKS, FUNCTIONS)}
             ${this._renderScoresCard(functionScores, FUNCTIONS, getNormalizedScore)}
 
@@ -326,6 +337,147 @@ export const ResultCard = {
                 診断をやり直す
             </button>
         `;
+    },
+
+    /**
+     * 矛盾詳細カードをレンダリング
+     * @param {Array} contradictions - 矛盾配列
+     * @param {Array} questions - 質問配列(IDから質問文を取得するため)
+     * @returns {string} HTMLマークアップ
+     */
+    _renderContradictionsCard(contradictions, questions) {
+        if (!contradictions || contradictions.length === 0) return '';
+        
+        // 深刻度でソート(高い順)
+        const sortedContradictions = [...contradictions].sort((a, b) => b.severity - a.severity);
+        
+        // 上位5件まで表示
+        const displayContradictions = sortedContradictions.slice(0, 5);
+        
+        const getSeverityLabel = (severity) => {
+            if (severity >= 0.75) return { label: '大きな文脈差', color: '#a78bfa', icon: '🎭' };
+            if (severity >= 0.5) return { label: '中程度の文脈差', color: '#60a5fa', icon: '🎨' };
+            return { label: '軽微な文脈差', color: '#10b981', icon: '🌿' };
+        };
+
+        // 質問IDから質問文を取得するヘルパー
+        const getQuestionText = (questionId) => {
+            const question = questions.find(q => q.id === questionId);
+            return question ? question.text : questionId;
+        };
+
+        return `
+            <div class="result-card" role="region" aria-labelledby="contradictions-heading" style="background: linear-gradient(135deg, rgba(96, 165, 250, 0.05), rgba(167, 139, 250, 0.05)); border: 1px solid rgba(96, 165, 250, 0.3);">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                    <span style="font-size: 20px;" aria-hidden="true">📊</span>
+                    <h4 id="contradictions-heading" style="font-size: 16px; background: linear-gradient(135deg, #60a5fa, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">文脈による判断の変化</h4>
+                </div>
+                
+                <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
+                    以下の質問ペアで、文脈に応じて異なる回答をしています。<br>
+                    これは<strong style="color: #60a5fa;">状況適応能力</strong>の表れである可能性があります。
+                </p>
+
+                <details open style="margin-bottom: 12px;">
+                    <summary style="
+                        cursor: pointer;
+                        padding: 12px;
+                        background: rgba(30, 41, 59, 0.4);
+                        border-radius: 8px;
+                        font-weight: 600;
+                        color: #60a5fa;
+                        user-select: none;
+                    ">
+                        詳細を表示 (${displayContradictions.length}件)
+                    </summary>
+                    
+                    <div style="margin-top: 12px;">
+                        ${displayContradictions.map((c, index) => {
+                            const { label, color, icon } = getSeverityLabel(c.severity);
+                            const severityPercent = Math.round(c.severity * 100);
+                            
+                            return `
+                                <div style="
+                                    padding: 12px;
+                                    background: rgba(30, 41, 59, 0.3);
+                                    border-left: 3px solid ${color};
+                                    border-radius: 8px;
+                                    margin-bottom: 8px;
+                                ">
+                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                        <span style="font-size: 16px;" aria-hidden="true">${icon}</span>
+                                        <span style="font-size: 12px; color: ${color}; font-weight: 600;">
+                                            ${label} (${severityPercent}%)
+                                        </span>
+                                    </div>
+                                    
+                                    <div style="display: grid; gap: 8px;">
+                                        <div style="
+                                            padding: 8px;
+                                            background: rgba(96, 165, 250, 0.1);
+                                            border-radius: 6px;
+                                            font-size: 12px;
+                                        ">
+                                            <div style="color: #60a5fa; font-weight: 600; margin-bottom: 4px;">
+                                                質問A
+                                            </div>
+                                            <div style="color: #e2e8f0; margin-bottom: 6px; line-height: 1.4;">
+                                                ${escapeHtml(getQuestionText(c.questionA))}
+                                            </div>
+                                            <div style="color: #cbd5e1;">
+                                                回答: <strong>${this._getAnswerLabel(c.valueA)}</strong>
+                                            </div>
+                                        </div>
+                                        
+                                        <div style="
+                                            padding: 8px;
+                                            background: rgba(167, 139, 250, 0.1);
+                                            border-radius: 6px;
+                                            font-size: 12px;
+                                        ">
+                                            <div style="color: #a78bfa; font-weight: 600; margin-bottom: 4px;">
+                                                質問B
+                                            </div>
+                                            <div style="color: #e2e8f0; margin-bottom: 6px; line-height: 1.4;">
+                                                ${escapeHtml(getQuestionText(c.questionB))}
+                                            </div>
+                                            <div style="color: #cbd5e1;">
+                                                回答: <strong>${this._getAnswerLabel(c.valueB)}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </details>
+
+                <div style="padding: 12px; background: rgba(96, 165, 250, 0.1); border-radius: 8px; border-left: 3px solid #60a5fa;">
+                    <div style="font-size: 11px; color: #cbd5e1; line-height: 1.5;">
+                        <strong style="color: #60a5fa;">💡 解釈のヒント</strong><br>
+                        • 同じテーマでも<strong>文脈が変われば判断が変わる</strong>のは自然なことです<br>
+                        • これは<strong>状況を読む力</strong>や<strong>認知的柔軟性</strong>の表れかもしれません<br>
+                        • あるいは、まだ自分の価値観が<strong>形成途中</strong>である可能性もあります
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    /**
+     * 回答値からラベルを取得
+     * @param {number} value - 回答値 (1-5)
+     * @returns {string} ラベル
+     */
+    _getAnswerLabel(value) {
+        const labels = {
+            1: "1: 全くそう思わない",
+            2: "2: あまりそう思わない",
+            3: "3: どちらとも言えない",
+            4: "4: ややそう思う",
+            5: "5: とてもそう思う"
+        };
+        return labels[value] || String(value);
     },
 
     /**
@@ -345,56 +497,74 @@ export const ResultCard = {
     },
 
     /**
-     * 次点タイプカードをレンダリング
-     * @param {string[]} top2 - トップ2タイプ
+     * 代替タイプカード(複数対応版)をレンダリング
+     * @param {Array} sortedTypes - ソート済みタイプ配列 [[type, score], ...]
      * @param {Object} mbtiDescriptions - MBTI説明
      * @param {Object} typeScores - タイプスコア
-     * @param {number} confidence - 確信度
+     * @param {number} versatilityScore - 多面性スコア
+     * @param {boolean} showMultiple - 複数表示フラグ
      * @returns {string} HTMLマークアップ
      */
-    _renderAlternativeTypeCard(top2, mbtiDescriptions, typeScores, confidence) {
-        const [firstType, secondType] = top2;
-        const secondDesc = mbtiDescriptions[secondType];
-        const firstScore = typeScores[firstType];
-        const secondScore = typeScores[secondType];
-        const scoreDiff = Math.abs(firstScore - secondScore).toFixed(1);
+    _renderAlternativeTypesCard(sortedTypes, mbtiDescriptions, typeScores, versatilityScore, showMultiple) {
+        const [first, second, third] = sortedTypes;
+        const [firstType, firstScore] = first;
+        const alternativeTypes = showMultiple ? [second, third] : [second];
 
         return `
-            <div class="result-card" style="background: rgba(251, 191, 36, 0.05); border: 1px solid rgba(251, 191, 36, 0.3);" role="region" aria-labelledby="alternative-type-heading">
+            <div class="result-card" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(236, 72, 153, 0.05)); border: 1px solid rgba(167, 139, 250, 0.4);" role="region" aria-labelledby="alternative-type-heading">
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                    <span style="font-size: 20px;" aria-hidden="true">💡</span>
-                    <h4 id="alternative-type-heading" style="font-size: 16px; color: #fbbf24; margin: 0;">次点タイプの可能性</h4>
+                    <span style="font-size: 20px;" aria-hidden="true">✨</span>
+                    <h4 id="alternative-type-heading" style="font-size: 16px; background: linear-gradient(135deg, #a78bfa, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0;">多面的な性格特性</h4>
                 </div>
                 <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 16px; line-height: 1.5;">
-                    確信度が${confidence}%と低めのため、以下のタイプの特性も持っている可能性があります。
+                    あなたは単一のタイプに収まらない<strong style="color: #a78bfa;">多面性(${versatilityScore}%)</strong>を持っています。<br>
+                    これは心理的な成熟と柔軟性の証です。以下のタイプの特性も併せ持っています。
                 </p>
-                <div style="
-                    padding: 16px;
-                    background: rgba(30, 41, 59, 0.6);
-                    border-radius: 12px;
-                    border: 1px solid rgba(148, 163, 184, 0.2);
-                ">
-                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                
+                ${alternativeTypes.map(([type, score]) => {
+                    const desc = mbtiDescriptions[type];
+                    const similarity = ((score / firstScore) * 100).toFixed(0);
+                    
+                    return `
                         <div style="
-                            font-family: 'JetBrains Mono', monospace;
-                            font-size: 24px;
-                            font-weight: 800;
-                            color: #f59e0b;
-                        " aria-label="次点タイプ ${secondType}">
-                            ${secondType}
-                        </div>
-                        <div style="flex: 1;">
-                            <div style="font-size: 16px; font-weight: 700; color: #f1f5f9;">
-                                ${escapeHtml(secondDesc.name)}
+                            padding: 16px;
+                            background: rgba(30, 41, 59, 0.6);
+                            border-radius: 12px;
+                            border: 1px solid rgba(167, 139, 250, 0.3);
+                            margin-bottom: 12px;
+                        ">
+                            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                <div style="
+                                    font-family: 'JetBrains Mono', monospace;
+                                    font-size: 24px;
+                                    font-weight: 800;
+                                    background: linear-gradient(135deg, #a78bfa, #ec4899);
+                                    -webkit-background-clip: text;
+                                    -webkit-text-fill-color: transparent;
+                                " aria-label="代替タイプ ${type}">
+                                    ${type}
+                                </div>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 16px; font-weight: 700; color: #f1f5f9;">
+                                        ${escapeHtml(desc.name)}
+                                    </div>
+                                    <div style="font-size: 12px; color: #94a3b8;">
+                                        類似度: ${similarity}%
+                                    </div>
+                                </div>
                             </div>
-                            <div style="font-size: 12px; color: #94a3b8;">
-                                スコア差: ${scoreDiff}点
-                            </div>
+                            <p style="font-size: 13px; color: #cbd5e1; margin: 0; line-height: 1.5;">
+                                ${escapeHtml(desc.description)}
+                            </p>
                         </div>
+                    `;
+                }).join('')}
+                
+                <div style="margin-top: 12px; padding: 12px; background: rgba(167, 139, 250, 0.1); border-radius: 8px; border-left: 3px solid #a78bfa;">
+                    <div style="font-size: 11px; color: #cbd5e1; line-height: 1.5;">
+                        <strong style="color: #a78bfa;">💡 これは良いことです</strong><br>
+                        Jung心理学では、複数の機能を統合できる人ほど心理的に成熟していると考えられています。
                     </div>
-                    <p style="font-size: 13px; color: #cbd5e1; margin: 0; line-height: 1.5;">
-                        ${escapeHtml(secondDesc.description)}
-                    </p>
                 </div>
             </div>
         `;
@@ -410,71 +580,74 @@ export const ResultCard = {
      * @returns {string} HTMLマークアップ
      */
     _renderMetricsCard(confidence, originalConfidence, consistency, contradictionCount, warning) {
-        const getConfidenceColor = (conf) => {
-            if (conf >= 70) return '#10b981';
-            if (conf >= 40) return '#60a5fa';
-            return '#f59e0b';
+        // 多面性スコア(確信度の逆)
+        const versatilityScore = 100 - confidence;
+        
+        const getVersatilityColor = (score) => {
+            if (score >= 60) return '#a78bfa'; // 高い多面性 = 紫
+            if (score >= 30) return '#60a5fa'; // 中程度 = 青
+            return '#10b981'; // 低い(明確) = 緑
         };
 
         const getConsistencyColor = (cons) => {
             if (cons >= 80) return '#10b981';
-            if (cons >= 60) return '#f59e0b';
-            return '#ef4444';
+            if (cons >= 60) return '#60a5fa';
+            return '#a78bfa'; // 低い一貫性も紫(文脈依存的 = 柔軟)
         };
 
-        const getConfidenceDesc = (conf) => {
-            if (conf >= 70) return 'タイプの特徴が明確です';
-            if (conf >= 40) return '標準的な診断結果です';
-            return '複数タイプの特性を持つ可能性があります';
+        const getVersatilityDesc = (score) => {
+            if (score >= 60) return '非常に多面的で柔軟な性格';
+            if (score >= 30) return 'バランスの取れた性格特性';
+            return '明確で一貫した性格特性';
         };
 
         const getConsistencyDesc = (cons) => {
             if (cons >= 80) return '回答に高い一貫性があります';
-            if (cons >= 60) return '一部矛盾が見られます';
-            return '回答の見直しをお勧めします';
+            if (cons >= 60) return '文脈に応じた判断の揺らぎ';
+            return '状況依存的な柔軟な判断傾向';
         };
 
-        const confColor = getConfidenceColor(confidence);
+        const versColor = getVersatilityColor(versatilityScore);
         const consColor = getConsistencyColor(consistency);
 
         return `
             <div class="result-card" role="region" aria-labelledby="metrics-heading">
-                <h4 id="metrics-heading" style="margin-bottom: 16px; font-size: 18px;">診断信頼性</h4>
+                <h4 id="metrics-heading" style="margin-bottom: 16px; font-size: 18px;">性格プロファイル分析</h4>
                 
                 ${this._renderMetricItem(
-                    '🎯',
-                    '確信度',
-                    confidence,
-                    confColor,
-                    getConfidenceDesc(confidence),
-                    originalConfidence !== confidence ? `(調整前: ${originalConfidence}%)` : null
+                    '✨',
+                    '性格の多面性',
+                    versatilityScore,
+                    versColor,
+                    getVersatilityDesc(versatilityScore),
+                    versatilityScore >= 60 ? '🎓 Jung心理学では個性化(成熟)の証とされます' : null
                 )}
                 
                 ${this._renderMetricItem(
-                    '📄',
-                    '回答の一貫性',
+                    '🎭',
+                    '文脈適応性',
                     consistency,
                     consColor,
                     getConsistencyDesc(consistency),
-                    contradictionCount > 0 ? `矛盾検出: ${contradictionCount}件` : null
+                    contradictionCount > 0 ? `文脈に応じた判断の変化: ${contradictionCount}件` : null
                 )}
 
-                ${warning ? `
+                ${versatilityScore >= 60 ? `
                     <div style="
                         display: flex;
                         align-items: flex-start;
                         gap: 8px;
                         padding: 12px;
                         margin-top: 12px;
-                        background: rgba(251, 191, 36, 0.1);
-                        border: 1px solid rgba(251, 191, 36, 0.3);
+                        background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(236, 72, 153, 0.1));
+                        border: 1px solid rgba(167, 139, 250, 0.3);
                         border-radius: 8px;
                         font-size: 12px;
-                        color: #fbbf24;
+                        color: #cbd5e1;
                         line-height: 1.5;
-                    " role="alert">
-                        <span style="font-size: 16px; flex-shrink: 0;" aria-hidden="true">⚠️</span>
-                        <span>${escapeHtml(warning)}</span>
+                    " role="note">
+                        <span style="font-size: 16px; flex-shrink: 0;" aria-hidden="true">🌟</span>
+                        <span>あなたは状況に応じて異なる認知機能を使い分けられる<strong style="color: #a78bfa;">柔軟性</strong>を持っています。これは単一タイプに固執するより成熟した心理状態を示しています。</span>
                     </div>
                 ` : ''}
             </div>
