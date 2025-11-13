@@ -26,7 +26,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Stylesheets - 相対パス -->
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="assets/css/variables.css">
   <link rel="stylesheet" href="assets/css/header.css">
   <link rel="stylesheet" href="assets/css/index.css">
   <link rel="stylesheet" href="assets/css/footer.css">
@@ -48,8 +49,8 @@
         
         <div class="hero__stats">
           <div class="hero__stat">
-            <div class="hero__stat-value">64</div>
-            <div class="hero__stat-label">Questions</div>
+            <div class="hero__stat-value">3</div>
+            <div class="hero__stat-label">Modes</div>
           </div>
           <div class="hero__stat">
             <div class="hero__stat-value">8</div>
@@ -61,10 +62,87 @@
           </div>
         </div>
         
-        <a class="cta cta--primary" href="/finder">
-          <span class="cta__text">診断を始める</span>
-          <span class="cta__icon" aria-hidden="true">→</span>
-        </a>
+        <!-- 3モード選択ボタン -->
+        <div class="mode-selector">
+          <a class="mode-card" href="finder.html?mode=simple">
+            <div class="mode-card__header">
+              <span class="mode-card__label">QUICK</span>
+            </div>
+            <h3 class="mode-card__title">クイック診断</h3>
+            <div class="mode-card__meta">
+              <span class="mode-card__questions">32問</span>
+              <span class="mode-card__time">3-5分</span>
+            </div>
+            <p class="mode-card__desc">最短3分で完了。認知機能の傾向を素早くチェック</p>
+          </a>
+
+          <a class="mode-card mode-card--recommended" href="finder.html?mode=standard">
+            <div class="mode-card__header">
+              <span class="mode-card__label">RECOMMENDED</span>
+            </div>
+            <h3 class="mode-card__title">スタンダード診断</h3>
+            <div class="mode-card__meta">
+              <span class="mode-card__questions">64問</span>
+              <span class="mode-card__time">7-10分</span>
+            </div>
+            <p class="mode-card__desc">バランスの取れた診断。精度と所要時間の最適解</p>
+            <div class="mode-card__badge">推奨</div>
+          </a>
+
+          <a class="mode-card" href="finder.html?mode=detail">
+            <div class="mode-card__header">
+              <span class="mode-card__label">DETAILED</span>
+            </div>
+            <h3 class="mode-card__title">詳細診断</h3>
+            <div class="mode-card__meta">
+              <span class="mode-card__questions">96問</span>
+              <span class="mode-card__time">12-15分</span>
+            </div>
+            <p class="mode-card__desc">最も精密な診断。より正確な結果を求める方へ</p>
+          </a>
+        </div>
+
+        <div class="mode-comparison">
+          <details class="mode-comparison__details">
+            <summary class="mode-comparison__summary">💡 各モードの違いについて</summary>
+            <div class="mode-comparison__table">
+              <table>
+                <thead>
+                  <tr>
+                    <th>モード</th>
+                    <th>質問数</th>
+                    <th>所要時間</th>
+                    <th>精度</th>
+                    <th>おすすめ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>クイック</strong></td>
+                    <td>32問</td>
+                    <td>3-5分</td>
+                    <td>★★★☆☆</td>
+                    <td>初めての方・手軽に試したい方</td>
+                  </tr>
+                  <tr class="highlighted">
+                    <td><strong>スタンダード</strong></td>
+                    <td>64問</td>
+                    <td>7-10分</td>
+                    <td>★★★★☆</td>
+                    <td>バランス重視の方（推奨）</td>
+                  </tr>
+                  <tr>
+                    <td><strong>詳細</strong></td>
+                    <td>96問</td>
+                    <td>12-15分</td>
+                    <td>★★★★★</td>
+                    <td>より正確な結果を求める方</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </div>
       </div>
     </section>
 
@@ -562,31 +640,31 @@
     <section class="process">
       <div class="container">
         <h2 class="section__title">診断の流れ</h2>
-        <p class="section__subtitle">約5分で完了するシンプルなプロセス</p>
+        <p class="section__subtitle">モードに応じて最適化されたプロセス</p>
         
         <div class="process__steps">
           <div class="process__step">
             <div class="process__step-number">1</div>
-            <h3 class="process__step-title">64問に回答</h3>
-            <p class="process__step-desc">各認知機能を8問ずつ測定。5段階評価で直感的に回答できます。</p>
+            <h3 class="process__step-title">モード選択</h3>
+            <p class="process__step-desc">あなたの時間と精度のニーズに合わせて、3つのモードから選択できます。</p>
           </div>
           
           <div class="process__step">
             <div class="process__step-number">2</div>
+            <h3 class="process__step-title">質問に回答</h3>
+            <p class="process__step-desc">各認知機能を測定する質問に、5段階評価で直感的に回答します。</p>
+          </div>
+          
+          <div class="process__step">
+            <div class="process__step-number">3</div>
             <h3 class="process__step-title">スコア計算</h3>
             <p class="process__step-desc">非線形重み付けと逆転項目を用いた心理測定学的スコアリング。</p>
           </div>
           
           <div class="process__step">
-            <div class="process__step-number">3</div>
-            <h3 class="process__step-title">タイプ判定</h3>
-            <p class="process__step-desc">ユングの機能スタック理論に基づき、16タイプから最適合を判定。</p>
-          </div>
-          
-          <div class="process__step">
             <div class="process__step-number">4</div>
             <h3 class="process__step-title">詳細分析</h3>
-            <p class="process__step-desc">機能スタック、確信度、各機能のスコア内訳を視覚的に表示。</p>
+            <p class="process__step-desc">機能スタック、確信度、矛盾検出、各機能のスコア内訳を視覚的に表示。</p>
           </div>
         </div>
       </div>
@@ -600,6 +678,17 @@
         
         <div class="faq__list">
           <div class="faq__item">
+            <h3 class="faq__item-question">3つのモードの違いは何ですか?</h3>
+            <p class="faq__item-answer">
+              <strong>質問数と精度のトレードオフ</strong>です。<br><br>
+              <strong>クイック診断(32問):</strong> 各機能を4問で測定。最短3分で完了しますが、精度は中程度です。初めての方や、手軽に試したい方におすすめ。<br><br>
+              <strong>スタンダード診断(64問):</strong> 各機能を8問で測定。バランスの取れた精度と所要時間（7-10分）で、最も推奨されるモードです。<br><br>
+              <strong>詳細診断(96問):</strong> 各機能を12問で測定。最も精密な診断（12-15分）で、より正確な結果を求める方に適しています。<br><br>
+              すべてのモードで同じアルゴリズムを使用しており、質問数が多いほど統計的な信頼性が向上します。
+            </p>
+          </div>
+
+          <div class="faq__item">
             <h3 class="faq__item-question">この診断は科学的に正しいですか?</h3>
             <p class="faq__item-answer">
               <strong>いいえ、「科学的に正しい」とは言えません。</strong>MBTI は再現性や予測妥当性の面で、学術的な性格心理学の基準を満たしていません。Big Five(五因子モデル)のような統計的に検証された指標と比べると、職業適性や人間関係の予測力は<strong>著しく低い</strong>です。<br><br>
@@ -612,7 +701,7 @@
             <h3 class="faq__item-question">他のMBTI診断と何が違うのですか?</h3>
             <p class="faq__item-answer">
               最大の違いは<strong>「透明性」と「誠実さ」</strong>です。多くのMBTI診断は、どのように判定しているのか、なぜその結果になったのかを一切説明しません。まるで占い師のように、「あなたはINTJです」と告げるだけ。<br><br>
-              このツールでは、<strong>すべての計算式、重み付けロジック、判定アルゴリズムをソースコードとして公開</strong>しています。非線形スコアリング、逆転項目処理、機能スタック理論の実装—すべて検証可能です。<br><br>
+              このツールでは、<strong>すべての計算式、重み付けロジック、判定アルゴリズムをソースコードとして公開</strong>しています。非線形スコアリング、逆転項目処理、機能スタック理論の実装、矛盾検出アルゴリズム—すべて検証可能です。<br><br>
               さらに重要なのは、<strong>このツール自体の限界を隠さない</strong>こと。「科学的に証明されています」と嘘をつかず、「理論的には魅力的だが、実証研究は不十分」と正直に示します。批判可能な形で提示することが、誠実さだと考えています。
             </p>
           </div>
@@ -630,8 +719,9 @@
           <div class="faq__item">
             <h3 class="faq__item-question">データは保存されますか?</h3>
             <p class="faq__item-answer">
-              <strong>いいえ、一切保存されません。</strong>すべての計算はあなたのブラウザ内で完結し、サーバーにデータは送信されません。回答内容も、診断結果も、ページを閉じれば消えます。<br><br>
-              これは技術的な制約ではなく、<strong>意図的な設計思想</strong>です。性格診断は極めて個人的な情報であり、誰かに記録されるべきではありません。あなたの内面は、あなただけのものです。
+              <strong>いいえ、サーバーには一切送信されません。</strong>すべての計算はあなたのブラウザ内で完結します。回答内容は、途中でページを離れても再開できるよう、<strong>あなたのブラウザ内にのみ一時保存</strong>されます（LocalStorage使用）。<br><br>
+              外部サーバーへのデータ送信は一切行われず、診断完了後もデータは自動的に削除されます。これは技術的な制約ではなく、<strong>意図的な設計思想</strong>です。性格診断は極めて個人的な情報であり、誰かに記録されるべきではありません。<br><br>
+              あなたの内面は、あなただけのものです。
             </p>
           </div>
 
@@ -640,11 +730,11 @@
             <p class="faq__item-answer">
               たくさんあります。正直に列挙します:<br><br>
               <strong>1. 理論的限界:</strong>ユングの8認知機能モデルは追試研究が不十分で、学術的コンセンサスがありません。<br><br>
-              <strong>2. 測定の限界:</strong>64問という質問数では、複雑な人間の認知を完全に捉えることは不可能です。自己報告式の質問は、社会的望ましさバイアスの影響を受けます。<br><br>
+              <strong>2. 測定の限界:</strong>質問数では、複雑な人間の認知を完全に捉えることは不可能です。自己報告式の質問は、社会的望ましさバイアスの影響を受けます。<br><br>
               <strong>3. 実装の限界:</strong>機能スタックの重み付けは理論に基づきますが、最適な係数は未検証です。より良いアルゴリズムがあるかもしれません。<br><br>
               <strong>4. 解釈の限界:</strong>診断結果は統計的な傾向であり、個人の複雑さを16タイプに還元することはできません。<br><br>
               <strong>5. 枠組の限界:</strong>人間の認知は連続的であり、E/I、S/N、T/F、J/Pという二項対立で完全に表現できるわけではありません。<br><br>
-              ユングは、人間の認知を思考・感情・直観・感覚の4機能と、それぞれの内向・外向という二重構造で説明しました。このツールはそれに対して、心理理論を実装することで、その形式的妥当性を検証しています。これは、人間の認知様式をアーキテクチャ的に理解しようとした試みであり、コードは理論の試金石に過ぎません。これらの限界を知った上で、それでも、「自分を見つめ直す道具」として価値を感じるなら、使ってください。批判的に、自覚的に。
+              これらの限界を知った上で、それでも、<strong>「自分を見つめ直す道具」</strong>として価値を感じるなら、使ってください。<strong>批判的</strong>に、<strong>自覚的</strong>に。
             </p>
           </div>
         </div>
@@ -655,11 +745,22 @@
     <section class="cta-section">
       <div class="container">
         <h2 class="cta-section__title">準備はできましたか?</h2>
-        <p class="cta-section__text">約5分で、あなたの認知機能プロファイルを分析します。すべての計算過程は透明で、検証可能です。</p>
-        <a class="cta cta--primary" href="/finder">
-          <span class="cta__text">今すぐ診断を始める</span>
-          <span class="cta__icon" aria-hidden="true">→</span>
-        </a>
+        <p class="cta-section__text">3つのモードから選んで、あなたの認知機能プロファイルを分析します。すべての計算過程は透明で、検証可能です。</p>
+        
+        <div class="cta-section__buttons">
+          <a class="cta cta--secondary" href="finder.html?mode=simple">
+            <span class="cta__text">クイック診断</span>
+            <span class="cta__meta">3-5分</span>
+          </a>
+          <a class="cta cta--primary" href="finder.html?mode=standard">
+            <span class="cta__text">スタンダード診断</span>
+            <span class="cta__meta">7-10分（推奨）</span>
+          </a>
+          <a class="cta cta--secondary" href="finder.html?mode=detail">
+            <span class="cta__text">詳細診断</span>
+            <span class="cta__meta">12-15分</span>
+          </a>
+        </div>
       </div>
     </section>
 

@@ -1,22 +1,9 @@
 /* =========================================
-   header.css - BEM版
+   header.css - BEM版 (variables.css対応)
    Persona Finder ヘッダー専用スタイル
+   
+   ⚠️ 重要: variables.css を先に読み込むこと
 ========================================= */
-
-/* ==========================================
-   CSS変数（一時的 - 後でvariables.cssに移行）
-========================================== */
-:root {
-  --header-bg: rgba(20, 28, 42, 0.85);
-  --header-bg-transparent: rgba(20, 28, 42, 0);
-  --header-border: rgba(255, 255, 255, 0.08);
-  --header-text-main: #e4f1ff;
-  --header-text-sub: #a7b6d4;
-  --accent-primary: #3b82f6;
-  --accent-secondary: #8b5cf6;
-  --accent-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  --font-ui: "Inter", "Noto Sans JP", sans-serif;
-}
 
 /* ==========================================
    ヘッダー全体
@@ -25,12 +12,14 @@
   position: fixed;
   top: 0;
   width: 100%;
-  z-index: 1000;
+  z-index: var(--z-header);
   background: var(--header-bg-transparent);
   border-bottom: 1px solid transparent;
   backdrop-filter: blur(0);
-  transition: background 0.3s ease, border-bottom 0.3s ease, 
-              box-shadow 0.3s ease, backdrop-filter 0.3s ease;
+  transition: background var(--transition-base), 
+              border-bottom var(--transition-base), 
+              box-shadow var(--transition-base), 
+              backdrop-filter var(--transition-base);
 }
 
 /* スクロール時の変化 */
@@ -42,12 +31,12 @@
 }
 
 /* ==========================================
-   コンテナ（中身配置）
+   コンテナ(中身配置)
 ========================================== */
 .header__container {
-  max-width: 1200px;
+  max-width: var(--container-max-width);
   margin: 0 auto;
-  padding: 16px 24px;
+  padding: var(--space-3) var(--space-4);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -61,9 +50,9 @@
   align-items: center;
   text-decoration: none;
   color: var(--header-text-main);
-  font-weight: 600;
-  font-size: 16px;
-  transition: opacity 0.3s ease;
+  font-weight: var(--font-semibold);
+  font-size: var(--text-base);
+  transition: opacity var(--transition-base);
 }
 
 .header__logo:hover {
@@ -74,26 +63,26 @@
   width: 40px;
   height: 40px;
   border-radius: 4px;
-  background: var(--accent-gradient);
+  background: var(--gradient-accent);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
+  font-weight: var(--font-extrabold);
   margin-right: 10px;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  box-shadow: var(--shadow-accent-sm);
+  transition: transform 0.2s ease, box-shadow var(--transition-base);
 }
 
 .header__logo:hover .header__logo-icon {
-  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.3);
+  box-shadow: var(--shadow-accent-md);
   transform: rotate(8deg);
 }
 
 .header__logo-text {
-  font-size: 18px;
-  font-weight: 800;
-  background: var(--accent-gradient);
+  font-size: var(--text-lg);
+  font-weight: var(--font-extrabold);
+  background: var(--gradient-accent);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -107,18 +96,18 @@
 .header__nav {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: var(--space-4);
   font-family: var(--font-ui);
 }
 
 /* ナビゲーションリンク */
 .header__nav-link {
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-  transition: opacity 0.3s ease;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  transition: opacity var(--transition-base);
   cursor: pointer;
-  background: var(--accent-gradient);
+  background: var(--gradient-accent);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -152,11 +141,11 @@
 
 .header__dropdown-trigger {
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-  transition: opacity 0.3s ease;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  transition: opacity var(--transition-base);
   cursor: pointer;
-  background: var(--accent-gradient);
+  background: var(--gradient-accent);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -189,9 +178,9 @@
   left: 0;
   background: rgba(30, 40, 60, 0.96);
   border: 1px solid var(--header-border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  padding: 8px 0;
+  padding: var(--space-1) 0;
   min-width: 200px;
   animation: fadeIn 0.25s ease;
 }
@@ -214,8 +203,8 @@
 /* ドロップダウンリンク */
 .header__dropdown-link {
   display: block;
-  padding: 10px 16px;
-  font-size: 14px;
+  padding: 10px var(--space-3);
+  font-size: var(--text-sm);
   text-decoration: none;
   color: #e4f1ff;
   background: none;
@@ -232,7 +221,7 @@
 }
 
 /* ==========================================
-   ハンバーガーメニュー（モバイル用）
+   ハンバーガーメニュー(モバイル用)
 ========================================== */
 .header__hamburger {
   display: none;
@@ -241,15 +230,15 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 8px;
-  z-index: 1001;
+  padding: var(--space-1);
+  z-index: calc(var(--z-header) + 1);
 }
 
 .header__hamburger-line {
   width: 24px;
   height: 2px;
   background: var(--header-text-main);
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform var(--transition-base), opacity var(--transition-base);
   border-radius: 2px;
 }
 
@@ -286,9 +275,9 @@
     backdrop-filter: blur(12px);
     flex-direction: column;
     align-items: flex-start;
-    padding: 24px;
+    padding: var(--space-4);
     gap: 0;
-    transition: right 0.3s ease;
+    transition: right var(--transition-base);
     border-left: 1px solid var(--header-border);
     box-shadow: -4px 0 16px rgba(0, 0, 0, 0.3);
   }
@@ -299,7 +288,7 @@
   
   .header__nav-link {
     width: 100%;
-    padding: 16px 0;
+    padding: var(--space-3) 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
   
@@ -311,15 +300,15 @@
   .header__dropdown-trigger {
     display: block;
     width: 100%;
-    padding: 16px 0;
+    padding: var(--space-3) 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .header__dropdown-menu {
     position: static;
     width: 100%;
-    margin-top: 8px;
-    margin-bottom: 8px;
+    margin-top: var(--space-1);
+    margin-bottom: var(--space-1);
     background: rgba(255, 255, 255, 0.05);
     box-shadow: none;
     border: none;
@@ -330,7 +319,7 @@
   }
   
   .header__container {
-    padding: 16px 16px;
+    padding: var(--space-3) var(--space-3);
   }
 }
 
@@ -339,17 +328,17 @@
 ========================================== */
 @media (max-width: 480px) {
   .header__container {
-    padding: 16px 12px;
+    padding: var(--space-3) var(--space-2);
   }
 
   .header__logo-icon {
     width: 36px;
     height: 36px;
-    font-size: 18px;
+    font-size: var(--text-lg);
   }
 
   .header__logo-text {
-    font-size: 16px;
+    font-size: var(--text-base);
   }
 
   .header__nav {
@@ -395,7 +384,7 @@
     background: none;
     flex-direction: row;
     padding: 0;
-    gap: 16px;
+    gap: var(--space-3);
   }
 
   .header__nav-link,
