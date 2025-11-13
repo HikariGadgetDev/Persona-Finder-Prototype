@@ -74,9 +74,9 @@
             <div class="footer__nav-column">
               <h4 class="footer__nav-title">診断ツール</h4>
               <ul class="footer__nav-list">
-                <li><a href="finder.html" class="footer__nav-link">簡易診断(未実装)</a></li>
-                <li><a href="finder.html" class="footer__nav-link">通常診断</a></li>
-                <li><a href="finder.html" class="footer__nav-link">詳細診断(未実装)</a></li>
+                <li><a href="finder.html?mode=simple" class="footer__nav-link">簡易診断</a></li>
+                <li><a href="finder.html?mode=standard" class="footer__nav-link">通常診断</a></li>
+                <li><a href="finder.html?mode=detail" class="footer__nav-link">詳細診断</a></li>
 
               </ul>
             </div>
@@ -86,7 +86,7 @@
               <ul class="footer__nav-list">
                 <li><a href="function.html" class="footer__nav-link">8つの機能</a></li>
                 <li><a href="index.html#types" class="footer__nav-link">16のタイプ(未実装)</a></li>
-                <li><a href="function.html" class="footer__nav-link">計算処理解説(未実装)</a></li>
+                <li><a href="description.html" class="footer__nav-link">ソースコード解説(未実装)</a></li>
               </ul>
             </div>
 
