@@ -212,7 +212,7 @@ function shuffleQuestionsWithConstraints(questions, seed) {
 // ============================================
 
 /**
- * 機能スコアを再計算
+ * 機能スコアを再計算（モード対応版）
  * @param {DiagnosisState} state - 診断状態
  * @param {Question[]} questions - 質問配列
  * @returns {Object<string, number>} 機能スコア
@@ -239,7 +239,7 @@ function recalculateFunctionScores(state, questions) {
 }
 
 /**
- * 暫定タイプを取得
+ * 暫定タイプを取得（モード対応版）
  * @param {DiagnosisState} state - 診断状態
  * @param {Question[]} questions - 質問配列
  * @returns {string} MBTI タイプ
@@ -258,13 +258,14 @@ function getProvisionalType(state, questions) {
         currentScores, 
         appContext.cognitiveStacks, 
         state.answers, 
-        questions
+        questions,
+        appContext.mode  // モードを渡す
     );
     return result.type;
 }
 
 /**
- * 各選択肢の影響を計算
+ * 各選択肢の影響を計算（モード対応版）
  * @param {Question} question - 質問
  * @param {DiagnosisState} state - 診断状態
  * @param {Question[]} questions - 質問配列
@@ -277,6 +278,13 @@ function calculateOptionImpacts(question, state, questions) {
     const isReverse = question.reverse || false;
     const provisionalType = getProvisionalType(state, questions);
     const stack = appContext.cognitiveStacks[provisionalType];
+    
+    // モード別の重みを動的にインポート・適用
+    import('./core.js').then(module => {
+        const MODE_WEIGHT_CONFIGS = module.MODE_WEIGHT_CONFIGS;
+    });
+    
+    // 暫定: 標準的な重みを使用（core.jsから取得）
     const weights = [4.0, 2.0, 1.0, 0.5];
     
     const currentScores = recalculateFunctionScores(state, questions);
@@ -286,10 +294,10 @@ function calculateOptionImpacts(question, state, questions) {
         const position = stack.indexOf(funcType);
         
         const currentRaw = currentScores[funcType];
-        const currentNormalized = getNormalizedScore(currentRaw);
+        const currentNormalized = getNormalizedScore(currentRaw, appContext.mode);
         
         const newRaw = currentRaw + delta;
-        const newNormalized = getNormalizedScore(newRaw);
+        const newNormalized = getNormalizedScore(newRaw, appContext.mode);
         const normalizedDelta = newNormalized - currentNormalized;
         
         if (position === -1) {
@@ -457,7 +465,7 @@ function updateProgressSection(state, questions) {
             provisionalType,
             appContext.mbtiDescriptions,
             appContext.cognitiveStacks,
-            getNormalizedScore,
+            (score) => getNormalizedScore(score, appContext.mode),
             questions,
             currentScores
         );
@@ -521,7 +529,7 @@ function updateScoresList(state, questions) {
     const orderedFunctions = [...stack, ...allFunctions.filter(f => !stack.includes(f))];
     
     orderedFunctions.forEach(key => {
-        const normalizedValue = getNormalizedScore(currentScores[key]);
+        const normalizedValue = getNormalizedScore(currentScores[key], appContext.mode);
         const valueEl = document.querySelector(`[data-score-key="${key}"] .score-mini-value`);
         
         if (valueEl) {
@@ -605,7 +613,8 @@ function renderResult(state) {
         state.functionScores, 
         appContext.cognitiveStacks,
         state.answers,
-        appContext.questions
+        appContext.questions,
+        appContext.mode  // モードを渡す
     );
     
     const questionScreen = document.getElementById('question-screen');
@@ -621,9 +630,10 @@ function renderResult(state) {
             appContext.mbtiDescriptions,
             appContext.cognitiveStacks,
             FUNCTIONS,
-            getNormalizedScore,
+            (score) => getNormalizedScore(score, appContext.mode),
             state.functionScores,
-            appContext.questions
+            appContext.questions,
+            appContext.mode  // モードを渡す
         );
     }
 }

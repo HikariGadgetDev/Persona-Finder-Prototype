@@ -304,9 +304,10 @@ export const ResultCard = {
      * @param {Function} getNormalizedScore - スコア正規化関数
      * @param {Object} functionScores - 機能スコア
      * @param {Array} questions - 質問配列(矛盾表示用)
+     * @param {string} mode - 診断モード
      * @returns {string} HTMLマークアップ
      */
-    render(result, mbtiDescriptions, COGNITIVE_STACKS, FUNCTIONS, getNormalizedScore, functionScores, questions) {
+    render(result, mbtiDescriptions, COGNITIVE_STACKS, FUNCTIONS, getNormalizedScore, functionScores, questions, mode) {
         const { type: mbtiType, confidence, originalConfidence, consistency, contradictionCount, warning, top2, typeScores, contradictions } = result;
         const desc = mbtiDescriptions[mbtiType];
         
@@ -320,10 +321,19 @@ export const ResultCard = {
             .sort((a, b) => b[1] - a[1])
             .slice(0, 3);
 
+        // モード表示名
+        const modeDisplayNames = {
+            simple: 'クイック診断',
+            standard: 'スタンダード診断',
+            detail: '詳細診断'
+        };
+        const modeDisplay = modeDisplayNames[mode] || mode;
+
         return `
             <div class="result-header" role="banner">
                 <h2 class="result-title">診断完了</h2>
                 <p class="result-subtitle">あなたの認知機能プロファイルが特定されました</p>
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">診断モード: ${modeDisplay}</div>
             </div>
 
             ${this._renderTypeCard(mbtiType, desc)}
